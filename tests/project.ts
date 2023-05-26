@@ -1,70 +1,61 @@
-import { expect, Page, BrowserContext } from '@playwright/test';
+import { Host } from './config';
 
-interface item {
-    name: string
-    setting: string
-    result: string
-    projectId: string
+interface Project {
+    Name: string
+    Result: string
+    Id: string
 }
 
 const pattern = {
-    setting: new RegExp(/\<a href=\"(\/Project\/BasiceSetting\/[^\"]+)\".+>.+/),
-    result: new RegExp(/\<a href=\"(\/Project\/Result\/[^\"]+)\".+>.+/),
-    pattern: new RegExp(/\<div class\=\"([^\"]+)\"\>/),
-    projectId: new RegExp(/\<a href=\"\/Project\/BasiceSetting\/([^\"]+)\".+>.+/),
+    ProjectId: new RegExp(/\<a href=\"\/Project\/Devices\/([^\"]+)\".+>.+/),
+    Result: new RegExp(/\<a href=\"\/Project\/.+Result\/([^\"]+)\".+>.+/),
 }
 
-const handleArray = (array: Array<string>): item => {
-    let output: item = {name: '', setting: '', result: '', projectId: ''};
-    while (array.length > 0 && array[0] !== '<div class="name">') array.shift();
+const handleArray = (array: Array<string>): Project => {
+    const output: Project = {Name: '', Result: '', Id: ''};
+    while (array.length !== 0 && array[0] !== '<div class=\"name\">') array.shift();
     array.shift();
-    const name = array.shift();
-    if (name !== undefined) output.name = name;
-    while (array.length > 0 && !array[0].startsWith('<a href="/Project/BasiceSetting')) array.shift();
-    const setting = array.shift();
-    if (setting !== undefined) output.setting = setting.replace(pattern.setting, '$1');
-    if (setting !== undefined) output.projectId = setting.replace(pattern.projectId, '$1');
-    while (array.length > 0 && !array[0].startsWith('<a href="/Project/Result')) array.shift();
-    const result = array.shift();
-    if (result !== undefined) output.result = result.replace(pattern.result, '$1');
+    output.Name = array.shift() || '';
+    while (array.length !== 0 && !array[0].startsWith('<div class=\"tool\">')) array.shift();
+    output.Id = array[1].replace(pattern.ProjectId, '$1');
+    output.Result = array[2].replace(pattern.Result, '$1');
     return output;
 }
 
-const parseResponse = (text: string): Array<item> => {
+const ItemStart = 'item draft';
+
+const parseResponse = (text: string): Array<Project> => {
     text = text.split(new RegExp(/\<div class\=\"pagination\-row\"\>.*/))[0]
     const array: Array<string> = [];
     text.split('\n').forEach(body => {
         if (body.trim() === '') return;
         array.push(body.trim());
     });
-    array.shift();
 
-    const output: Array<item> = [];
-    while(array.length > 1) {
-        const candidate = [array.shift() || ''];
-        while (array.length > 2) {
-            const matches = array[0].replace(pattern.pattern, '$1');
-            if (matches === 'item draft') break;
+    const output: Array<Project> = [];
+    while(array.length !== 0) {
+        const sentence = array.shift() || '';
+        if (!sentence.includes(ItemStart)) {
+            continue;
+        }
+
+        const candidate: Array<string> = [];
+        while (array.length !== 0 && !array[0].includes(ItemStart)) {
             candidate.push(array.shift() || '');
         }
-        candidate.length > 1 && output.push(handleArray(candidate));
+
+        if (candidate.length !== 0) output.push(handleArray(candidate));
     }
     return output;
 }
 
-interface GetProjectIdRequest {
+interface Request {
     ProjectName: string
     CreatedBy: string
 }
 
-const GetProjectId = async( page: Page, context: BrowserContext, request: GetProjectIdRequest ): Promise<string> => {
-    const token = await page.locator('input[name=__RequestVerificationToken]');
-    const tokenValue = await token.getAttribute('value');
-    expect(token).not.toEqual('');
-
-    const cookies = await context.cookies();
-    const cookieString = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ');
-    expect(cookieString).not.toEqual('');
+const ProjectDetail = async(token: string, cookie: string, request: Request): Promise<Project> => {
+    const URL = `${Host}/Project/_Projects`;
 
     const param = new URLSearchParams();
     param.append('PageNumber', '1');
@@ -72,28 +63,23 @@ const GetProjectId = async( page: Page, context: BrowserContext, request: GetPro
     param.append('Status', 'Draft');
     param.append('OrderBy', 'ModifyByDesc');
     param.append('CreateBy', request.CreatedBy);
-    param.append('ProjectListType', '');
+    param.append('ProjectListType', 'Grid');
 
-    const html = await fetch("https://stage-backend-web4ux.azurewebsites.net/Project/_Projects", {
-        "headers": {
-            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "requestverificationtoken": tokenValue || '',
-            "cookie": cookieString,
+    const html = await fetch(URL, {
+        headers: {
+            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'requestverificationtoken': token,
+            'cookie': cookie,
         },
-        "body": param.toString(),
-        "method": "POST"
+        body: param.toString(),
+        method: 'POST',
     }).then(data => data.text());
 
     const body = parseResponse(html);
-    let validate = false;
-    let projectId = '';
-    body.forEach(element => {
-        if (element.name === request.ProjectName) {
-            validate = true;
-            projectId = element.projectId;
-        }
-    });
-    return validate? projectId: '';
+    for (let i = 0; i < body.length; i++) {
+        if (body[i].Name === request.ProjectName) return body[i];
+    }
+    return {Name: '', Id: '', Result: ''};
 };
 
-export { GetProjectId }
+export { ProjectDetail, Project };

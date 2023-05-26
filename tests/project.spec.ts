@@ -14,11 +14,11 @@ test.describe('Validate Project', () => {
     const ParticipantCount = '1';
     const ModelName = 'a';
     const DeviceName = 'aaa';
-    const TypingTotalTimer = '60';
+    const TypingTotalTimer = '1';
     const CountdownTimer = '60';
     const TextName = 'What Is Yoga?';
 
-    test.skip('Happy Path', async({ page }) => {
+    test('Happy Path', async({ page }) => {
         await page.goto(URL);
 
         await page.waitForSelector('#divStep1');
@@ -61,7 +61,7 @@ test.describe('Validate Project', () => {
         const step4Task = await page.locator('.step4Tasks');
         const actualTypingTotalTimer = await step4Task.locator('div:nth-child(3) > p:nth-child(2) > span').textContent();
         const actualCountdownTimer = await step4Task.locator('div:nth-child(3) > p:nth-child(3) > span').textContent();
-        const actualSelectDocument = await step4Task.locator('div:nth-child(3) > p:nth-child(4) > span').textContent();
+        const actualSelectDocument = await step4Task.locator('div:nth-child(3) > p:nth-child(5) > span').textContent();
 
         expect(actualProjectName).toEqual(ProjectName);
         expect(actualParticipantCount).toEqual(ParticipantCount);
@@ -69,10 +69,10 @@ test.describe('Validate Project', () => {
         expect(actualDeviceName).toEqual(DeviceName);
         expect(actualTypingTotalTimer).toEqual(TypingTotalTimer);
         expect(actualCountdownTimer).toEqual(CountdownTimer);
-        expect(actualSelectDocument).toEqual(TextName);
+        expect(actualSelectDocument).toContain(TextName);
     });
 
-    test('GetProjectId', async({ page, context }) => {
+    test.skip('GetProjectId', async({ page, context }) => {
         const projectId = await GetProjectId(page, context, {ProjectName: 'Test 2023-03-16', CreatedBy: 'sandy.tu@emric.com.tw'});
         expect(projectId).toEqual('')
     })

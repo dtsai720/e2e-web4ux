@@ -1,5 +1,7 @@
-const Email = 'sandy.tu@emric.com.tw';
-const Password = 'emric1238';
-const Host = 'https://stage-backend-web4ux.azurewebsites.net';
+import 'dotenv/config';
+
+const Email = process.env.Email || '';
+const Password = process.env.Password || '';
+const Host = process.env.Host || '';
 
 export { Email, Password, Host };
