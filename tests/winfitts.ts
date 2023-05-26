@@ -56,7 +56,6 @@ const SetupDevice = async(token: string, cookie: string, project: Project) => {
 
     param.append('ProjectId', project.Id);
     param.append('ProjectName', project.Name);
-    // param.append('CreateTime', '5/26/2023+9:40:40+AM++00:00)
     param.append('ProjectStauts', 'Draft');
     param.append('DeviceId', '922b17008c304c07bda137be23524709');
     param.append('ModelName', 'b');

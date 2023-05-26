@@ -1,15 +1,19 @@
 import { test, expect, Page } from '@playwright/test';
+
 import { Email, Password, Host } from './config';
+
+const URL = `${Host}/Home/Login`;
+
+const redirectURL = async(page: Page, email: string, password: string): Promise<string> => {
+    await page.goto(URL);
+    await page.getByLabel('Email').fill(email);
+    await page.getByLabel('Password').fill(password);
+    await page.getByRole('button', { name: 'Login' }).click();
+    return await page.url();
+};
 
 test.describe('Validate Login', () => {
     const URL = `${Host}/Home/Login`;
-    const redirectURL = async(page: Page, email: string, password: string): Promise<string> => {
-        await page.goto(URL);
-        await page.getByLabel('Email').fill(email);
-        await page.getByLabel('Password').fill(password);
-        await page.getByRole('button', { name: 'Login' }).click();
-        return await page.url();
-    };
 
     test('Happy Path', async ({ page }) => {
         const currentURL = await redirectURL(page, Email, Password);
