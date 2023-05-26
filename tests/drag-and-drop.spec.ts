@@ -1,4 +1,5 @@
 import { test } from '@playwright/test';
+
 import { Login } from './login';
 
 test.describe('Validate Drag And Drop', () => {
@@ -7,7 +8,5 @@ test.describe('Validate Drag And Drop', () => {
     });
 
     test('Happy Path', async({ page }) => {
-        // const URL = await page.url();
-        // expect(URL).toEqual('hello world')
     });
 });

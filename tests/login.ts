@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+
 import { Email, Password, Host } from './config';
 
 const Login = async(page: Page) => {

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
+
 import { Host } from './config';
 import { Login } from './login';
-import { GetProjectId } from './project';
 
 test.describe('Validate Project', () => {
     test.beforeEach(async ({ page }) => {
@@ -71,9 +71,4 @@ test.describe('Validate Project', () => {
         expect(actualCountdownTimer).toEqual(CountdownTimer);
         expect(actualSelectDocument).toContain(TextName);
     });
-
-    test.skip('GetProjectId', async({ page, context }) => {
-        const projectId = await GetProjectId(page, context, {ProjectName: 'Test 2023-03-16', CreatedBy: 'sandy.tu@emric.com.tw'});
-        expect(projectId).toEqual('')
-    })
 });
