@@ -1,7 +1,16 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
-import { URL, ContentType, Method, ProjectStatus } from "./config";
 import { Project } from './project';
+import { Device } from './device';
+import { Participant } from './participant';
+import {
+    Calibrate,
+    ContentType,
+    Method,
+    ProjectStatus,
+    URL,
+    WinfittsFailedRate
+} from "./config";
 
 interface createWinfittsRequest {
     ProjectName: string
@@ -61,22 +70,6 @@ const WinfittsProject = async (token: string, cookie: string, request: createWin
     });
 };
 
-interface Device {
-    ModelName: string
-    DeviceName: string
-    Id: string
-};
-
-const DeviceDetails = async(page: Page, projectId: string): Promise<Device> => {
-    await page.goto([URL.FetchDevicePrefix, projectId].join('/'));
-    await page.waitForSelector('#table-drop > tr');
-    const locator = page.locator('#table-drop > tr');
-    const ModelName = await locator.locator('input.modelname').getAttribute('value') || '';
-    const DeviceName = await locator.locator('input.devicename').getAttribute('value') || '';
-    const Id = await locator.locator('input.id').getAttribute('value') || '';
-    return {ModelName, DeviceName, Id};
-};
-
 interface resolution {
     Width: number
     Height: number
@@ -126,4 +119,117 @@ const SetupCalibration = async(token: string, cookie: string, request: calibrati
     });
 };
 
-export { WinfittsProject, SetupCalibration, NewResolution, DeviceDetails };
+const convertToDifficulty = (w: number, d: number): number => {
+    const width = Math.abs(w - 3) < Math.abs(w - 15)? 3: 15;
+    const distance = Math.abs(d - 30) < Math.abs(d - 150)? 30: 150;
+    if (width === 3) return distance === 30? 3.5: 5.7;
+    return distance === 30? 1.6: 3.5;
+};
+
+interface range {
+    Max: number
+    Min: number
+};
+
+const timeSleepByDifficulty = (diff: number): range => {
+    switch (diff) {
+        case 1.6:
+            return {Max: 500, Min: 350};
+        case 3.5:
+            return {Max: 750, Min: 500};
+        case 5.7:
+            return {Max: 1200, Min: 900};
+    }
+    return {Max: 300, Min: 100};
+};
+
+interface clickEvent {
+    X: number
+    Y: number
+    Timestamp: number
+};
+
+interface WinfittsResult {
+    Start: clickEvent
+    Target: clickEvent
+    Else: clickEvent|null
+};
+
+const newClickEvent = (x: number, y: number, timestamp: number): clickEvent => {
+    return {X: x, Y: y, Timestamp: timestamp};
+};
+
+const TotalTrailCount = 32;
+
+const StartSingleWinfitts = async(page: Page, device: Device, participant: Participant):
+    Promise<Array<WinfittsResult>> => {
+    await page.goto([URL.StartWinfittsPrefix, device.Id].join('/'));
+
+    await page.getByLabel('Account').fill(participant.Account);
+    await page.getByRole('button', { name: 'Starts' }).click();
+    await page.getByRole('link', { name: 'Start' }).click();
+    await page.getByRole('button', { name: 'Start' }).click();
+
+    const output: Array<WinfittsResult> = [];
+    for(let i = 0; i < TotalTrailCount; i++) {
+        await page.waitForSelector('.start.dot.light');
+        const start = await page.locator('.start.dot');
+        const target = await page.locator('.target.dot');
+        const startBox = await start.boundingBox();
+        const targetBox = await target.boundingBox();
+        expect(startBox).not.toEqual(null);
+        expect(targetBox).not.toEqual(null);
+
+        await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
+        await start.click();
+        const result: WinfittsResult = {
+            Start: newClickEvent(0, 0, Math.floor(Date.now())),
+            Target: newClickEvent(0, 0, 0),
+            Else: null,
+        };
+
+        if (startBox !== null && targetBox !== null) {
+            result.Start.X = startBox['x'];
+            result.Start.Y = startBox['y'];
+            result.Target.X = targetBox['x'];
+            result.Target.Y = targetBox['y'];
+
+            const distance = Math.pow(
+                Math.pow(result.Start.X-result.Target.X, 2) +
+                Math.pow(result.Start.Y-result.Target.Y, 2), 0.5) / Calibrate;
+            const width = targetBox['width'] / Calibrate;
+            const difficulty = convertToDifficulty(width, distance);
+            const sleepRange = timeSleepByDifficulty(difficulty);
+            const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
+
+            await new Promise(f => setTimeout(f, sleepTime));
+            const hasFail = Math.random() * 100 <= WinfittsFailedRate * difficulty/(1.6+3.5+5.7);
+
+            if (hasFail) {
+                const x = (result.Start.X+result.Target.X)/2;
+                const y = (result.Start.Y+result.Target.Y)/2;
+                await page.mouse.click(x, y);
+
+                const timestamp = Math.floor(Date.now());
+                result.Else = newClickEvent(x, y, timestamp);
+                const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
+                await new Promise(f => setTimeout(f, sleepTime));
+            };
+        };
+        await page.waitForSelector('.target.dot.light');
+        await target.click();
+        result.Target.Timestamp = Math.floor(Date.now());
+        output.push(result);
+    };
+
+    await page.getByRole('button', { name: 'Finish' }).click();
+    return output;
+};
+
+export {
+    WinfittsProject,
+    SetupCalibration,
+    NewResolution,
+    StartSingleWinfitts,
+    WinfittsResult,
+};

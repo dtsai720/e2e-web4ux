@@ -1,4 +1,9 @@
-import { URL, ContentType, Method, ProjectStatus } from './config';
+import {
+    ContentType,
+    Method,
+    ProjectStatus,
+    URL
+} from './config';
 
 interface Project {
     Name: string
