@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import { Host } from './config';
+import { URL } from './config';
 import { Login } from './login';
 
 test.describe('Validate Project', () => {
@@ -9,7 +9,6 @@ test.describe('Validate Project', () => {
     });
 
     const timestampInSeconds = Math.floor(Date.now() / 1000);
-    const URL = `${Host}/Project/Add`;
     const ProjectName = `Test-${timestampInSeconds}`;
     const ParticipantCount = '1';
     const ModelName = 'a';
@@ -19,7 +18,7 @@ test.describe('Validate Project', () => {
     const TextName = 'What Is Yoga?';
 
     test('Happy Path', async({ page }) => {
-        await page.goto(URL);
+        await page.goto(URL.CreateProject);
 
         await page.waitForSelector('#divStep1');
         await page.locator('#ProjectName').fill(ProjectName);

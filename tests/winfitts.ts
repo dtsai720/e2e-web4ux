@@ -1,78 +1,122 @@
-import { Host } from "./config";
+import { Page } from '@playwright/test';
+
+import { URL, ContentType, Method, ProjectStatus } from "./config";
 import { Project } from './project';
 
-const WinfittsProject = async (token: string, cookie: string, projectName: string) => {
-    const URL = `${Host}/Project/Add`;
+interface createWinfittsRequest {
+    ProjectName: string
+    ModelName: string
+    DeviceName: string
+    ParticipantCount: number
+};
+
+interface winfittsSetting {
+    Width: number
+    Distance: number
+    Difficulty: number
+};
+
+const NewWinfittsSetting = (width: number, distance: number, difficulty: number): winfittsSetting => {
+    return {Width: width, Distance: distance, Difficulty: difficulty};
+};
+
+const settings: Array<winfittsSetting> = [
+    NewWinfittsSetting(3, 150, 5.7),
+    NewWinfittsSetting(15, 150, 3.5),
+    NewWinfittsSetting(3, 30, 3.5),
+    NewWinfittsSetting(15, 30, 1.6),
+];
+
+const TaskType = 'Winfitts';
+
+const WinfittsProject = async (token: string, cookie: string, request: createWinfittsRequest) => {
     const param = new URLSearchParams();
 
-    param.append('ProjectName', projectName);
-    param.append('ParticipantCount', '1');
-    param.append('Devices[0].ModelName', 'a');
-    param.append('Devices[0].DeviceName', 'a');
+    param.append('ProjectName', request.ProjectName);
+    param.append('ParticipantCount', request.ParticipantCount.toString());
+    param.append('__RequestVerificationToken', token)
+
+    param.append('Devices[0].ModelName', request.ModelName);
+    param.append('Devices[0].DeviceName', request.DeviceName);
     param.append('Devices[0].Sort', '0');
-    param.append('Tasks[0].TaskType', 'Winfitts');
+
+    param.append('Tasks[0].TaskType', TaskType);
     param.append('Tasks[0].Sort', '0');
     param.append('Tasks[0].TrailsTestRound', '1');
 
-    param.append('Tasks[0].WinfittsSettings[0].Width', '3');
-    param.append('Tasks[0].WinfittsSettings[0].Distance', '150');
-    param.append('Tasks[0].WinfittsSettings[0].Sort', '0');
-    param.append('Tasks[0].WinfittsSettings[0].Difficulty', '5.7');
+    for (let i = 0; i < settings.length; i++) {
+        param.append(`Tasks[0].WinfittsSettings[${i}].Width`, settings[i].Width.toString());
+        param.append(`Tasks[0].WinfittsSettings[${i}].Distance`, settings[i].Distance.toString());
+        param.append(`Tasks[0].WinfittsSettings[${i}].Sort`, i.toString());
+        param.append(`Tasks[0].WinfittsSettings[${i}].Difficulty`, settings[i].Difficulty.toString());
+    }
 
-    param.append('Tasks[0].WinfittsSettings[1].Width', '15');
-    param.append('Tasks[0].WinfittsSettings[1].Distance', '150');
-    param.append('Tasks[0].WinfittsSettings[1].Sort', '1');
-    param.append('Tasks[0].WinfittsSettings[1].Difficulty', '3.5');
-
-    param.append('Tasks[0].WinfittsSettings[2].Width', '3');
-    param.append('Tasks[0].WinfittsSettings[2].Distance', '30');
-    param.append('Tasks[0].WinfittsSettings[2].Sort', '2');
-    param.append('Tasks[0].WinfittsSettings[2].Difficulty', '3.5');
-
-    param.append('Tasks[0].WinfittsSettings[0].Width', '15');
-    param.append('Tasks[0].WinfittsSettings[0].Distance', '30');
-    param.append('Tasks[0].WinfittsSettings[0].Sort', '3');
-    param.append('Tasks[0].WinfittsSettings[0].Difficulty', '1.6');
-
-    param.append('WinfittsPracticeTrails', '');
-    param.append('DragAndDropPracticeTrails', '');
-    param.append('TypingPractice', '');
-
-    param.append('__RequestVerificationToken', token)
-
-    await fetch(URL, {
+    await fetch(URL.CreateProject, {
         headers: {
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'content-type': ContentType.Form,
             'cookie': cookie,
         },
         body: param.toString(),
-        method: "POST"
+        method: Method.Post,
     });
 };
 
-const SetupDevice = async(token: string, cookie: string, project: Project) => {
-    const URL = `${Host}/Project/DeviceSetting/${project.Id}`;
+interface Device {
+    ModelName: string
+    DeviceName: string
+    Id: string
+};
+
+const DeviceDetails = async(page: Page, projectId: string): Promise<Device> => {
+    await page.goto([URL.FetchDevicePrefix, projectId].join('/'));
+    await page.waitForSelector('#table-drop > tr');
+    const locator = page.locator('#table-drop > tr');
+    const ModelName = await locator.locator('input.modelname').getAttribute('value') || '';
+    const DeviceName = await locator.locator('input.devicename').getAttribute('value') || '';
+    const Id = await locator.locator('input.id').getAttribute('value') || '';
+    return {ModelName, DeviceName, Id};
+};
+
+interface resolution {
+    Width: number
+    Height: number
+};
+
+const NewResolution = (w: number, h: number): resolution => {
+    return {Width: w, Height: h};
+};
+
+interface calibrationRequest {
+    Project: Project
+    Device: Device
+    Calibrate: number
+    DeviceResolution: resolution
+    InnerResolution: resolution
+    OuterResolution: resolution
+};
+
+const SetupCalibration = async(token: string, cookie: string, request: calibrationRequest) => {
     const param = new URLSearchParams();
 
-    param.append('ProjectId', project.Id);
-    param.append('ProjectName', project.Name);
-    param.append('ProjectStauts', 'Draft');
-    param.append('DeviceId', '922b17008c304c07bda137be23524709');
-    param.append('ModelName', 'b');
-    param.append('DeviceName', 'b');
-    param.append('Calibrate', '4.125');
+    param.append('ProjectId', request.Project.Id);
+    param.append('ProjectName', request.Project.Name);
+    param.append('ProjectStauts', ProjectStatus);
+    param.append('DeviceId', request.Device.Id);
+    param.append('ModelName', request.Device.ModelName);
+    param.append('DeviceName', request.Device.DeviceName);
+    param.append('Calibrate', request.Calibrate.toString());
 
-    param.append('DeviceWidth', '1920');
-    param.append('DeviceHeight', '1080');
+    param.append('DeviceWidth', request.DeviceResolution.Width.toString());
+    param.append('DeviceHeight', request.DeviceResolution.Height.toString());
 
-    param.append('InnerWidth', '1920');
-    param.append('InnerHeight', '1080');
+    param.append('InnerWidth', request.InnerResolution.Width.toString());
+    param.append('InnerHeight', request.InnerResolution.Height.toString());
 
-    param.append('OuterWidth', '1920');
-    param.append('OuterHeight', '1080');
+    param.append('OuterWidth', request.OuterResolution.Width.toString());
+    param.append('OuterHeight', request.OuterResolution.Height.toString());
     param.append('__RequestVerificationToken', token);
 
-    await fetch(URL, {
+    await fetch([URL.CalibrateDevicePrefix, request.Project.Id].join('/'), {
         headers: {
             'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'cookie': cookie,
@@ -80,6 +124,6 @@ const SetupDevice = async(token: string, cookie: string, project: Project) => {
         body: param.toString(),
         method: 'POST',
     });
-}
+};
 
-export { WinfittsProject, SetupDevice };
+export { WinfittsProject, SetupCalibration, NewResolution, DeviceDetails };

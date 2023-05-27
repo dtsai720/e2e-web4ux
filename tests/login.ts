@@ -1,10 +1,9 @@
 import { Page } from '@playwright/test';
 
-import { Email, Password, Host } from './config';
+import { Email, Password, URL } from './config';
 
 const Login = async(page: Page) => {
-    const URL = `${Host}/Home/Login`;
-    await page.goto(URL);
+    await page.goto(URL.Login);
     await page.getByLabel('Email').fill(Email);
     await page.getByLabel('Password').fill(Password);
     await page.getByRole('button').click();
