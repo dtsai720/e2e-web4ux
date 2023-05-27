@@ -3,12 +3,26 @@ import { expect, test } from '@playwright/test';
 import { Login } from './login';
 import { Token } from './csrf';
 import { Cookies } from './cookies';
-import { WinfittsProject, SetupCalibration, DeviceDetails, NewResolution } from './winfitts';
 import { ProjectDetail, NewProjectName } from './project';
-import { Width, Height, Calibrate, Email } from './config';
+import { DeviceDetails } from './device';
+import { ParticipantDetail } from './participant';
+import {
+    Width,
+    Height,
+    Calibrate,
+    Email,
+    ParticipantCount,
+    ModelName,
+    DeviceName
+} from './config';
+import {
+    WinfittsProject,
+    SetupCalibration,
+    NewResolution,
+    StartSingleWinfitts,
+    WinfittsResult
+} from './winfitts';
 
-const ModelName = 'model name';
-const DeviceName = 'device name';
 const prefixProjectName = 'Winfitts';
 const postfixProjectName = '';
 
@@ -30,9 +44,8 @@ test.describe('Validate Winfitts', () => {
             ProjectName: projectName,
             ModelName: ModelName,
             DeviceName: DeviceName,
-            ParticipantCount: 1,
+            ParticipantCount: ParticipantCount,
         });
-
         const project = await ProjectDetail(token, cookie, {
             ProjectName: projectName,
             CreatedBy: Email,
@@ -50,6 +63,14 @@ test.describe('Validate Winfitts', () => {
             InnerResolution: NewResolution(Width, Height),
             OuterResolution: NewResolution(Width, Height),
         });
-    });
 
+        const participants = await ParticipantDetail(page, project.Id, ParticipantCount);
+        expect(participants.length).toEqual(ParticipantCount);
+
+        const output: Array<Array<WinfittsResult>> = [];
+        for(let i = 0; i < participants.length; i++) {
+            const result = await StartSingleWinfitts(page, device, participants[i]);
+            output.push(result);
+        };
+    });
 });
