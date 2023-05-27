@@ -6,4 +6,3 @@ const Cookies = async (context: BrowserContext): Promise<string> => {
 };
 
 export { Cookies };
-

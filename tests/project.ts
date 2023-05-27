@@ -1,4 +1,4 @@
-import { Host } from './config';
+import { URL, ContentType, Method, ProjectStatus } from './config';
 
 interface Project {
     Name: string
@@ -17,15 +17,17 @@ const handleArray = (array: Array<string>): Project => {
     array.shift();
     output.Name = array.shift() || '';
     while (array.length !== 0 && !array[0].startsWith('<div class=\"tool\">')) array.shift();
+    if (array.length < 3) return output;
     output.Id = array[1].replace(pattern.ProjectId, '$1');
     output.Result = array[2].replace(pattern.Result, '$1');
     return output;
 }
 
 const ItemStart = 'item draft';
+const lastLinePattern = new RegExp(/\<div class\=\"pagination\-row\"\>.*/);
 
 const parseResponse = (text: string): Array<Project> => {
-    text = text.split(new RegExp(/\<div class\=\"pagination\-row\"\>.*/))[0]
+    text = text.split(lastLinePattern)[0]
     const array: Array<string> = [];
     text.split('\n').forEach(body => {
         if (body.trim() === '') return;
@@ -49,30 +51,34 @@ const parseResponse = (text: string): Array<Project> => {
     return output;
 }
 
-interface Request {
+interface fetchProjectRequest {
     ProjectName: string
     CreatedBy: string
-}
+};
 
-const ProjectDetail = async(token: string, cookie: string, request: Request): Promise<Project> => {
-    const URL = `${Host}/Project/_Projects`;
+const defaultOrder = 'ModifyByDesc';
+const defaultListType = 'Grid';
+
+const ProjectDetail = async(token: string, cookie: string, request: fetchProjectRequest):
+    Promise<Project> => {
 
     const param = new URLSearchParams();
+
     param.append('PageNumber', '1');
     param.append('ProjectName', request.ProjectName);
-    param.append('Status', 'Draft');
-    param.append('OrderBy', 'ModifyByDesc');
+    param.append('Status', ProjectStatus);
+    param.append('OrderBy', defaultOrder);
     param.append('CreateBy', request.CreatedBy);
-    param.append('ProjectListType', 'Grid');
+    param.append('ProjectListType', defaultListType);
 
-    const html = await fetch(URL, {
+    const html = await fetch(URL.ListProject, {
         headers: {
-            'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'content-type': ContentType.Form,
             'requestverificationtoken': token,
             'cookie': cookie,
         },
         body: param.toString(),
-        method: 'POST',
+        method: Method.Post,
     }).then(data => data.text());
 
     const body = parseResponse(html);
@@ -82,4 +88,11 @@ const ProjectDetail = async(token: string, cookie: string, request: Request): Pr
     return {Name: '', Id: '', Result: ''};
 };
 
-export { ProjectDetail, Project };
+const NewProjectName = (prefix: string, postfix: string): string => {
+    const timestamp = Math.floor(Date.now());
+    if (prefix === '') prefix = 'All';
+    if (postfix === '') return ['Test', prefix, timestamp.toString()].join('-');
+    return ['Test', prefix, timestamp.toString(), postfix].join('-');
+};
+
+export { ProjectDetail, Project, NewProjectName };
