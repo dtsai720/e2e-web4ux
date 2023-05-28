@@ -1,7 +1,7 @@
 {
   "name": "e2e-web4ux",
   "version": "1.0.0",
-  "description": "## Run test",
+  "description": "e2e test",
   "main": "index.js",
   "scripts": {},
   "keywords": [],
@@ -14,5 +14,9 @@
   },
   "dependencies": {
     "xml2js": "^0.4.23"
+  },
+  "engines": {
+    "npm": ">=9.6.4",
+    "node": ">=18.15.0"
   }
 }
