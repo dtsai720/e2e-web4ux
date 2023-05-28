@@ -13,28 +13,28 @@
 2. Please make sure you're able to run node-js script.
     Use below command to validate.
     ```sh
-    $ node -v
+    node -v
     ```
     If you don't install node-js, please use this [link](https://nodejs.org/en/download) to install it.
 
 3. Please make sure you're able to execute git command.
     ```sh
-    $ git --version
+    git --version
     ```
     If you don't install git, please use this [link](https://git-scm.com/downloads) to install it.
 
 4. Download this repository.
     ```sh
-    $ git clone https://github.com/dtsai720/e2e-web4ux.git
-    $ cd e2e-web4ux
+    git clone https://github.com/dtsai720/e2e-web4ux.git
+    cd e2e-web4ux
     ```
     Also, you can use below command to get current directory.
     ```sh
-    $ pwd
+    pwd
     ```
 5. Install dependencies.
     ```sh
-    $ npm install
+    npm install
     ```
 
 6. Rename file '.env.example' to '.env'
@@ -83,10 +83,10 @@ Edit file named '.env'.
 
 ## **Run The Test**
 ```sh
-$ npx playwright test
+npx playwright test
 ```
 
 ## **Show Test Report**
 ```sh
-$ npx playwright show-report
+npx playwright show-report
 ```
