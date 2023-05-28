@@ -67,7 +67,7 @@ Edit file named '.env'.
     DeviceName='device name'
     ```
 
-5. **Chane participant count.**
+5. **Change participant count.**
     ```sh
     ParticipantCount=12
     ```
