@@ -36,6 +36,8 @@ const URL = {
     CalibrateDevicePrefix: `${Host}/Project/DeviceSetting`,
     FetchParticipantPrefix: `${Host}/Project/Participants`,
     StartWinfittsPrefix: `${ExperimentHost}/Login`,
+    WinfittsResultPrefix: `${Host}/Project/WinfittsResult`,
+    WinfittsRawDataPrefix: `${Host}/Project/WinfittsRowData`,
 };
 
 export {

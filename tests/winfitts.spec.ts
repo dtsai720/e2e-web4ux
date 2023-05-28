@@ -20,7 +20,10 @@ import {
     SetupCalibration,
     NewResolution,
     StartSingleWinfitts,
-    WinfittsResult
+    FetchWinfittsResult,
+    ExceptedWinfittsResult,
+    FetchWinfittsRawData,
+    TotalTrailCount
 } from './winfitts';
 
 const prefixProjectName = 'Winfitts';
@@ -67,10 +70,18 @@ test.describe('Validate Winfitts', () => {
         const participants = await ParticipantDetail(page, project.Id, ParticipantCount);
         expect(participants.length).toEqual(ParticipantCount);
 
-        const output: Array<Array<WinfittsResult>> = [];
+        const partice: Array<ExceptedWinfittsResult> = [];
         for(let i = 0; i < participants.length; i++) {
-            const result = await StartSingleWinfitts(page, device, participants[i]);
-            output.push(result);
+            const winfitts = await StartSingleWinfitts(page, device, participants[i]);
+            partice.push(winfitts);
         };
+        // TODO: compare partice and result
+        const result = await FetchWinfittsResult(page, project.Result);
+        // TODO: compare partice and rawdata
+        const rawdata = await FetchWinfittsRawData(page, project.Result);
+        expect(rawdata.length).toEqual(ParticipantCount);
+        for (let i = 0; i < rawdata.length; i++) {
+            expect(rawdata[i].Results.length).toEqual(TotalTrailCount);
+        }
     });
 });
