@@ -1,9 +1,9 @@
-import { test } from '@playwright/test';
+import { test } from "@playwright/test";
 
-import { Login } from './login';
+import { Login } from "./login";
 
 test.describe("Validate Drag And Drop", () => {
     test.beforeEach(async ({ page }) => {
-        await Login(page)
+        await Login(page);
     });
 });

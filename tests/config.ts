@@ -15,11 +15,15 @@ const ExperimentHost = process.env.ExperimentHost || "";
 const Width = parseInt(process.env.Width || defaultWidth.toString());
 const Height = parseInt(process.env.Height || defaultHeight.toString());
 const Calibrate = parseFloat(process.env.Calibrate || defaultCalibrate.toString());
-const ParticipantCount = parseInt(process.env.ParticipantCount || defaultParticipantCount.toString());
+const ParticipantCount = parseInt(
+    process.env.ParticipantCount || defaultParticipantCount.toString()
+);
 const ModelName = process.env.ModelName || defaultModelName;
 const DeviceName = process.env.DeviceName || defaultDeviceName;
-const WinfittsFailedRate = parseInt(process.env.WinfittsFailedRate || defaultWinfittsFailedRate.toString());
-const EnableTimeSleep = process.env.EnableTimeSleep === 'True';
+const WinfittsFailedRate = parseInt(
+    process.env.WinfittsFailedRate || defaultWinfittsFailedRate.toString()
+);
+const EnableTimeSleep = process.env.EnableTimeSleep === "True";
 
 const ContentType = {
     Form: "application/x-www-form-urlencoded; charset=UTF-8",

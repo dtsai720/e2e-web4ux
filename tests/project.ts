@@ -1,38 +1,33 @@
-import {
-    ContentType,
-    Method,
-    ProjectStatus,
-    URL
-} from './config';
+import { ContentType, Method, ProjectStatus, URL } from "./config";
 
 interface Project {
-    Name: string
-    Result: string
-    Id: string
+    Name: string;
+    Result: string;
+    Id: string;
 }
 
 const pattern = {
     ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^\"]+)".+>.+/),
     Result: new RegExp(/<a href="\/Project\/.+Result\/([^\"]+)\".+>.+/),
-}
+};
 
 const handleArray = (array: Array<string>): Project => {
-    const output: Project = {Name: "", Result: "", Id: ""};
-    while (array.length !== 0 && array[0] !== "<div class=\"name\">") array.shift();
+    const output: Project = { Name: "", Result: "", Id: "" };
+    while (array.length !== 0 && array[0] !== '<div class="name">') array.shift();
     array.shift();
     output.Name = array.shift() || "";
-    while (array.length !== 0 && !array[0].startsWith("<div class=\"tool\">")) array.shift();
+    while (array.length !== 0 && !array[0].startsWith('<div class="tool">')) array.shift();
     if (array.length < 3) return output;
     output.Id = array[1].replace(pattern.ProjectId, "$1");
     output.Result = array[2].replace(pattern.Result, "$1");
     return output;
-}
+};
 
 const ItemStart = "item draft";
 const lastLinePattern = new RegExp(/\<div class\=\"pagination\-row\"\>.*/);
 
 const parseResponse = (text: string): Array<Project> => {
-    text = text.split(lastLinePattern)[0]
+    text = text.split(lastLinePattern)[0];
     const array: Array<string> = [];
     text.split("\n").forEach(body => {
         if (body.trim() === "") return;
@@ -40,7 +35,7 @@ const parseResponse = (text: string): Array<Project> => {
     });
 
     const output: Array<Project> = [];
-    while(array.length !== 0) {
+    while (array.length !== 0) {
         const sentence = array.shift() || "";
         if (!sentence.includes(ItemStart)) {
             continue;
@@ -54,19 +49,21 @@ const parseResponse = (text: string): Array<Project> => {
         if (candidate.length !== 0) output.push(handleArray(candidate));
     }
     return output;
-}
+};
 
 interface fetchProjectRequest {
-    ProjectName: string
-    CreatedBy: string
+    ProjectName: string;
+    CreatedBy: string;
 }
 
 const defaultOrder = "ModifyByDesc";
 const defaultListType = "Grid";
 
-const ProjectDetail = async(token: string, cookie: string, request: fetchProjectRequest):
-    Promise<Project> => {
-
+const ProjectDetail = async (
+    token: string,
+    cookie: string,
+    request: fetchProjectRequest
+): Promise<Project> => {
     const param = new URLSearchParams();
 
     param.append("PageNumber", "1");
@@ -79,8 +76,8 @@ const ProjectDetail = async(token: string, cookie: string, request: fetchProject
     const html = await fetch(URL.ListProject, {
         headers: {
             "content-type": ContentType.Form,
-            "requestverificationtoken": token,
-            "cookie": cookie,
+            requestverificationtoken: token,
+            cookie: cookie,
         },
         body: param.toString(),
         method: Method.Post,
@@ -90,7 +87,7 @@ const ProjectDetail = async(token: string, cookie: string, request: fetchProject
     for (let i = 0; i < body.length; i++) {
         if (body[i].Name === request.ProjectName) return body[i];
     }
-    return {Name: "", Id: "", Result: ""};
+    return { Name: "", Id: "", Result: "" };
 };
 
 const NewProjectName = (prefix: string, postfix: string): string => {

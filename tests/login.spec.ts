@@ -1,8 +1,8 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from "@playwright/test";
 
-import { Email, Password, URL } from './config';
+import { Email, Password, URL } from "./config";
 
-const redirectURL = async(page: Page, email: string, password: string): Promise<string> => {
+const redirectURL = async (page: Page, email: string, password: string): Promise<string> => {
     await page.goto(URL.Login);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password").fill(password);
@@ -11,7 +11,6 @@ const redirectURL = async(page: Page, email: string, password: string): Promise<
 };
 
 test.describe("Validate Login", () => {
-
     test("Happy Path", async ({ page }) => {
         const currentURL = await redirectURL(page, Email, Password);
         expect(currentURL).toEqual(URL.Home);

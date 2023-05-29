@@ -1,20 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-import { Login } from './login';
-import { Token } from './csrf';
-import { Cookies } from './cookies';
-import { ProjectDetail, NewProjectName } from './project';
-import { DeviceDetails } from './device';
-import { ParticipantDetail } from './participant';
-import {
-    Width,
-    Height,
-    Calibrate,
-    Email,
-    ParticipantCount,
-    ModelName,
-    DeviceName
-} from './config';
+import { Login } from "./login";
+import { Token } from "./csrf";
+import { Cookies } from "./cookies";
+import { ProjectDetail, NewProjectName } from "./project";
+import { DeviceDetails } from "./device";
+import { ParticipantDetail } from "./participant";
+import { Width, Height, Calibrate, Email, ParticipantCount, ModelName, DeviceName } from "./config";
 import {
     WinfittsProject,
     SetupCalibration,
@@ -23,18 +15,18 @@ import {
     FetchWinfittsResult,
     ExceptedWinfittsResult,
     FetchWinfittsRawData,
-    TotalTrailCount
-} from './winfitts';
+    TotalTrailCount,
+} from "./winfitts";
 
 const prefixProjectName = "Winfitts";
 const postfixProjectName = "";
 
 test.describe("Validate Winfitts", () => {
     test.beforeEach(async ({ page }) => {
-        await Login(page)
+        await Login(page);
     });
 
-    test("Winfitts", async({ page, context }) => {
+    test("Winfitts", async ({ page, context }) => {
         await page.setViewportSize({
             width: Width,
             height: Height,
@@ -71,7 +63,7 @@ test.describe("Validate Winfitts", () => {
         expect(participants.length).toEqual(ParticipantCount);
 
         const partice: Array<ExceptedWinfittsResult> = [];
-        for(let i = 0; i < participants.length; i++) {
+        for (let i = 0; i < participants.length; i++) {
             const winfitts = await StartSingleWinfitts(page, device, participants[i]);
             partice.push(winfitts);
         }
