@@ -4,7 +4,8 @@
   "description": "e2e test",
   "main": "index.js",
   "scripts": {
-    "eslint": "eslint tests --ext --fix .ts"
+    "eslint": "eslint tests --ext --fix .ts",
+    "prettier-format": "prettier --config .prettierrc 'tests/*.ts' --write"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +18,7 @@
     "dotenv": "^16.0.3",
     "eslint": "^8.41.0",
     "eslint-plugin-typescript": "^0.14.0",
+    "prettier": "^2.8.8",
     "typescript-eslint-parser": "^22.0.0"
   },
   "dependencies": {

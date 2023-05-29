@@ -1,4 +1,4 @@
-import { BrowserContext } from '@playwright/test';
+import { BrowserContext } from "@playwright/test";
 
 const Cookies = async (context: BrowserContext): Promise<string> => {
     const cookies = await context.cookies();

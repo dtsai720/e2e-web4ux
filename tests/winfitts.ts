@@ -1,8 +1,8 @@
-import { Page } from '@playwright/test';
+import { Page } from "@playwright/test";
 
-import { Project } from './project';
-import { Device } from './device';
-import { Participant } from './participant';
+import { Project } from "./project";
+import { Device } from "./device";
+import { Participant } from "./participant";
 import {
     Calibrate,
     ContentType,
@@ -10,24 +10,28 @@ import {
     Method,
     ProjectStatus,
     URL,
-    WinfittsFailedRate
+    WinfittsFailedRate,
 } from "./config";
 
 interface createWinfittsRequest {
-    ProjectName: string
-    ModelName: string
-    DeviceName: string
-    ParticipantCount: number
+    ProjectName: string;
+    ModelName: string;
+    DeviceName: string;
+    ParticipantCount: number;
 }
 
 interface winfittsSetting {
-    Width: number
-    Distance: number
-    Difficulty: number
+    Width: number;
+    Distance: number;
+    Difficulty: number;
 }
 
-const NewWinfittsSetting = (width: number, distance: number, difficulty: number): winfittsSetting => {
-    return {Width: width, Distance: distance, Difficulty: difficulty};
+const NewWinfittsSetting = (
+    width: number,
+    distance: number,
+    difficulty: number
+): winfittsSetting => {
+    return { Width: width, Distance: distance, Difficulty: difficulty };
 };
 
 const settings: Array<winfittsSetting> = [
@@ -44,7 +48,7 @@ const WinfittsProject = async (token: string, cookie: string, request: createWin
 
     param.append("ProjectName", request.ProjectName);
     param.append("ParticipantCount", request.ParticipantCount.toString());
-    param.append("__RequestVerificationToken", token)
+    param.append("__RequestVerificationToken", token);
 
     param.append("Devices[0].ModelName", request.ModelName);
     param.append("Devices[0].DeviceName", request.DeviceName);
@@ -58,13 +62,16 @@ const WinfittsProject = async (token: string, cookie: string, request: createWin
         param.append(`Tasks[0].WinfittsSettings[${i}].Width`, settings[i].Width.toString());
         param.append(`Tasks[0].WinfittsSettings[${i}].Distance`, settings[i].Distance.toString());
         param.append(`Tasks[0].WinfittsSettings[${i}].Sort`, i.toString());
-        param.append(`Tasks[0].WinfittsSettings[${i}].Difficulty`, settings[i].Difficulty.toString());
+        param.append(
+            `Tasks[0].WinfittsSettings[${i}].Difficulty`,
+            settings[i].Difficulty.toString()
+        );
     }
 
     await fetch(URL.CreateProject, {
         headers: {
             "content-type": ContentType.Form,
-            "cookie": cookie,
+            cookie: cookie,
         },
         body: param.toString(),
         method: Method.Post,
@@ -72,24 +79,24 @@ const WinfittsProject = async (token: string, cookie: string, request: createWin
 };
 
 interface resolution {
-    Width: number
-    Height: number
+    Width: number;
+    Height: number;
 }
 
 const NewResolution = (w: number, h: number): resolution => {
-    return {Width: w, Height: h};
+    return { Width: w, Height: h };
 };
 
 interface calibrationRequest {
-    Project: Project
-    Device: Device
-    Calibrate: number
-    DeviceResolution: resolution
-    InnerResolution: resolution
-    OuterResolution: resolution
+    Project: Project;
+    Device: Device;
+    Calibrate: number;
+    DeviceResolution: resolution;
+    InnerResolution: resolution;
+    OuterResolution: resolution;
 }
 
-const SetupCalibration = async(token: string, cookie: string, request: calibrationRequest) => {
+const SetupCalibration = async (token: string, cookie: string, request: calibrationRequest) => {
     const param = new URLSearchParams();
 
     param.append("ProjectId", request.Project.Id);
@@ -113,7 +120,7 @@ const SetupCalibration = async(token: string, cookie: string, request: calibrati
     await fetch([URL.CalibrateDevicePrefix, request.Project.Id].join("/"), {
         headers: {
             "content-type": ContentType.Form,
-            "cookie": cookie,
+            cookie: cookie,
         },
         body: param.toString(),
         method: Method.Post,
@@ -121,54 +128,54 @@ const SetupCalibration = async(token: string, cookie: string, request: calibrati
 };
 
 const normalizedWidth = (w: number): number => {
-    return Math.abs(w - 3) < Math.abs(w - 15)? 3: 15;
+    return Math.abs(w - 3) < Math.abs(w - 15) ? 3 : 15;
 };
 
 const normalizedDistance = (d: number): number => {
-    return Math.abs(d - 30) < Math.abs(d - 150)? 30: 150;
+    return Math.abs(d - 30) < Math.abs(d - 150) ? 30 : 150;
 };
 
 const convertToDifficulty = (w: number, d: number): number => {
     const width = normalizedWidth(w);
     const distance = normalizedDistance(d);
-    if (width === 3) return distance === 30? 3.5: 5.7;
-    return distance === 30? 1.6: 3.5;
+    if (width === 3) return distance === 30 ? 3.5 : 5.7;
+    return distance === 30 ? 1.6 : 3.5;
 };
 
 interface range {
-    Max: number
-    Min: number
+    Max: number;
+    Min: number;
 }
 
 const timeSleepByDifficulty = (diff: number): range => {
     switch (diff) {
         case 1.6:
-            return {Max: 500, Min: 350};
+            return { Max: 500, Min: 350 };
         case 3.5:
-            return {Max: 750, Min: 500};
+            return { Max: 750, Min: 500 };
         case 5.7:
-            return {Max: 1200, Min: 900};
+            return { Max: 1200, Min: 900 };
     }
-    return {Max: 300, Min: 100};
+    return { Max: 300, Min: 100 };
 };
 
 interface clickEvent {
-    X: number
-    Y: number
-    Timestamp: number
+    X: number;
+    Y: number;
+    Timestamp: number;
 }
 
 interface SingleWinfittsResult {
-    Start: clickEvent
-    Target: clickEvent
-    Else: clickEvent|null
-    Width: number
-    Distance: number
+    Start: clickEvent;
+    Target: clickEvent;
+    Else: clickEvent | null;
+    Width: number;
+    Distance: number;
 }
 
 interface ExceptedWinfittsResult {
-    Account: string
-    Results: Array<SingleWinfittsResult>
+    Account: string;
+    Results: Array<SingleWinfittsResult>;
 }
 
 const newClickEvent = (x: number, y: number, timestamp: number): clickEvent => {
@@ -177,8 +184,11 @@ const newClickEvent = (x: number, y: number, timestamp: number): clickEvent => {
 
 const TotalTrailCount = 32;
 
-const StartSingleWinfitts = async(page: Page, device: Device, participant: Participant):
-    Promise<ExceptedWinfittsResult> => {
+const StartSingleWinfitts = async (
+    page: Page,
+    device: Device,
+    participant: Participant
+): Promise<ExceptedWinfittsResult> => {
     await page.goto([URL.StartWinfittsPrefix, device.Id].join("/"));
 
     await page.getByLabel("Account").fill(participant.Account);
@@ -187,7 +197,7 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
     await page.getByRole("button", { name: "Start" }).click();
 
     const output: Array<SingleWinfittsResult> = [];
-    for(let i = 0; i < TotalTrailCount; i++) {
+    for (let i = 0; i < TotalTrailCount; i++) {
         await page.waitForSelector(".start.dot.light");
         const start = await page.locator(".start.dot");
         const target = await page.locator(".target.dot");
@@ -210,9 +220,12 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
             result.Target.X = targetBox["x"];
             result.Target.Y = targetBox["y"];
 
-            const distance = Math.pow(
-                Math.pow(result.Start.X-result.Target.X, 2) +
-                Math.pow(result.Start.Y-result.Target.Y, 2), 0.5) / Calibrate;
+            const distance =
+                Math.pow(
+                    Math.pow(result.Start.X - result.Target.X, 2) +
+                        Math.pow(result.Start.Y - result.Target.Y, 2),
+                    0.5
+                ) / Calibrate;
             const width = targetBox["width"] / Calibrate;
 
             result.Width = normalizedWidth(width);
@@ -223,42 +236,47 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
             const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
 
             if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
-            const hasFail = Math.random() * 100 <= WinfittsFailedRate * difficulty/(1.6+3.5+5.7);
+            const hasFail =
+                Math.random() * 100 <= (WinfittsFailedRate * difficulty) / (1.6 + 3.5 + 5.7);
 
             if (hasFail) {
-                const x = (result.Start.X+result.Target.X)/2;
-                const y = (result.Start.Y+result.Target.Y)/2;
+                const x = (result.Start.X + result.Target.X) / 2;
+                const y = (result.Start.Y + result.Target.Y) / 2;
                 await page.mouse.click(x, y);
 
                 const timestamp = Math.floor(Date.now());
                 result.Else = newClickEvent(x, y, timestamp);
-                const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
+                const sleepTime =
+                    Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
                 if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
-            };
-        };
+            }
+        }
         await page.waitForSelector(".target.dot.light");
         await target.click();
         result.Target.Timestamp = Math.floor(Date.now());
         output.push(result);
-    };
+    }
     await page.getByRole("button", { name: "Finish" }).click();
     return { Account: participant.Account, Results: output };
 };
 
 interface SingleActualWinfittsResult {
-    Id: number
-    Width: number
-    Distance: number
-    CursorMovementTime: number
-    ErrorRate: number
+    Id: number;
+    Width: number;
+    Distance: number;
+    CursorMovementTime: number;
+    ErrorRate: number;
 }
 
 interface ActualWinfittsResults {
-    Account: string
-    Results: Array<SingleActualWinfittsResult>
+    Account: string;
+    Results: Array<SingleActualWinfittsResult>;
 }
 
-const FetchWinfittsResult = async(page: Page, id: string): Promise<Array<ActualWinfittsResults>> => {
+const FetchWinfittsResult = async (
+    page: Page,
+    id: string
+): Promise<Array<ActualWinfittsResults>> => {
     await page.goto([URL.WinfittsResultPrefix, id].join("/"));
     const table = await page.locator("#formRemoveRowData > div.block-table > table > tbody");
     const rows: Array<Array<string>> = [];
@@ -266,7 +284,7 @@ const FetchWinfittsResult = async(page: Page, id: string): Promise<Array<ActualW
     for (const row of await table.locator("tr").all()) {
         const array: Array<string> = [];
         for (const data of await row.locator("td").all()) {
-            const text = await data.textContent() || "";
+            const text = (await data.textContent()) || "";
             if (text.trim() === "") continue;
             array.push(text.trim());
         }
@@ -275,18 +293,18 @@ const FetchWinfittsResult = async(page: Page, id: string): Promise<Array<ActualW
 
     // Group element by account.
     const output: Array<ActualWinfittsResults> = [];
-    for (let i = 0; i < rows.length; i+=4) {
+    for (let i = 0; i < rows.length; i += 4) {
         rows[i].shift(); // remove index
         const account = rows[i].shift() || "";
         const result: ActualWinfittsResults = { Account: account, Results: [] };
 
         for (let j = 0; j < 4; j++) {
-            const Id = parseFloat(rows[i+j][0]);
-            const wd = rows[i+j][1].split("/");
+            const Id = parseFloat(rows[i + j][0]);
+            const wd = rows[i + j][1].split("/");
             const Width = parseInt(wd[0]);
             const Distance = parseInt(wd[1]);
-            const CursorMovementTime = parseInt(rows[i+j][2]);
-            const ErrorRate = parseFloat(rows[i+j][3].replace(" %", ""))*0.01;
+            const CursorMovementTime = parseInt(rows[i + j][2]);
+            const ErrorRate = parseFloat(rows[i + j][3].replace(" %", "")) * 0.01;
             result.Results.push({ Id, Width, Distance, CursorMovementTime, ErrorRate });
         }
         output.push(result);
@@ -295,33 +313,33 @@ const FetchWinfittsResult = async(page: Page, id: string): Promise<Array<ActualW
 };
 
 interface WinfittsRow {
-    TrailNumber: number
-    IsFailed: boolean
-    ErrorTime: number
-    Width: number
-    Distance: number
-    Id: number
-    Angle: number
-    EventTime: number
-    Start: clickEvent
-    Target: clickEvent
-    Else: Array<clickEvent>
+    TrailNumber: number;
+    IsFailed: boolean;
+    ErrorTime: number;
+    Width: number;
+    Distance: number;
+    Id: number;
+    Angle: number;
+    EventTime: number;
+    Start: clickEvent;
+    Target: clickEvent;
+    Else: Array<clickEvent>;
 }
 
 interface SingleWinfitts {
-    Account: string
-    ModelName: string
-    DeviceName: string
-    ErrorRate: string
-    EventTime: number
-    Results: Array<WinfittsRow>
+    Account: string;
+    ModelName: string;
+    DeviceName: string;
+    ErrorRate: string;
+    EventTime: number;
+    Results: Array<WinfittsRow>;
 }
 
 const EventTypeStart = "start";
 const EventTypeTarget = "target";
 const EventTypeElse = "else";
 
-const FetchWinfittsRawData = async(page: Page, id: string): Promise<Array<SingleWinfitts>> => {
+const FetchWinfittsRawData = async (page: Page, id: string): Promise<Array<SingleWinfitts>> => {
     await page.goto([URL.WinfittsRawDataPrefix, id].join("/"));
     await page.waitForSelector("#divData");
     const table = await page.locator("#divData");
@@ -329,12 +347,17 @@ const FetchWinfittsRawData = async(page: Page, id: string): Promise<Array<Single
 
     for (const row of await table.locator("div.data1-pack").all()) {
         const title: Array<string> = [];
-        const participant: SingleWinfitts = { Account: "", ModelName: "",
-            DeviceName: "", ErrorRate: "", EventTime: 0, Results: []
+        const participant: SingleWinfitts = {
+            Account: "",
+            ModelName: "",
+            DeviceName: "",
+            ErrorRate: "",
+            EventTime: 0,
+            Results: [],
         };
 
         for (const each of await row.locator(".data1 > span").all()) {
-            const text = await each.textContent() || "";
+            const text = (await each.textContent()) || "";
             title.push(text.trim());
         }
 
@@ -345,15 +368,24 @@ const FetchWinfittsRawData = async(page: Page, id: string): Promise<Array<Single
         participant.EventTime = parseInt(title[5]);
 
         for (const each of await row.locator("div.data2-pack").all()) {
-            const result: WinfittsRow = { TrailNumber: 0, IsFailed: false,
-                ErrorTime: 0, Width: 0, Distance: 0, Id: 0, Angle: 0, EventTime: 0,
-                Start: newClickEvent(0,0,0), Target: newClickEvent(0,0,0), Else: [],
+            const result: WinfittsRow = {
+                TrailNumber: 0,
+                IsFailed: false,
+                ErrorTime: 0,
+                Width: 0,
+                Distance: 0,
+                Id: 0,
+                Angle: 0,
+                EventTime: 0,
+                Start: newClickEvent(0, 0, 0),
+                Target: newClickEvent(0, 0, 0),
+                Else: [],
             };
 
             for (const data of await each.locator("div.data2").all()) {
                 const array: Array<string> = [];
                 for (const column of await data.locator("span").all()) {
-                    const text = await column.textContent() || "";
+                    const text = (await column.textContent()) || "";
                     array.push(text.trim());
                 }
                 result.TrailNumber = parseInt(array[0]);
@@ -369,7 +401,7 @@ const FetchWinfittsRawData = async(page: Page, id: string): Promise<Array<Single
             for (const data of await each.locator("div.data3").all()) {
                 const array: Array<string> = [];
                 for (const column of await data.locator("span").all()) {
-                    const text = await column.textContent() || "";
+                    const text = (await column.textContent()) || "";
                     array.push(text.trim());
                 }
                 array[1] = array[1].slice(1, -1);
@@ -377,7 +409,8 @@ const FetchWinfittsRawData = async(page: Page, id: string): Promise<Array<Single
                 const event = newClickEvent(
                     parseInt(position[0].trim()),
                     parseInt(position[1].trim()),
-                    parseInt(array[2]));
+                    parseInt(array[2])
+                );
                 if (array[0] === EventTypeStart) result.Start = event;
                 if (array[0] === EventTypeTarget) result.Target = event;
                 if (array[0] === EventTypeElse) result.Else.push(event);
