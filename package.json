@@ -3,14 +3,21 @@
   "version": "1.0.0",
   "description": "e2e test",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "eslint": "eslint tests --ext --fix .ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@playwright/test": "^1.31.2",
     "@types/dotenv": "^8.2.0",
-    "dotenv": "^16.0.3"
+    "@typescript-eslint/eslint-plugin": "^5.59.7",
+    "@typescript-eslint/parser": "^5.59.7",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.41.0",
+    "eslint-plugin-typescript": "^0.14.0",
+    "typescript-eslint-parser": "^22.0.0"
   },
   "dependencies": {
     "xml2js": "^0.4.23"

@@ -26,15 +26,15 @@ import {
     TotalTrailCount
 } from './winfitts';
 
-const prefixProjectName = 'Winfitts';
-const postfixProjectName = '';
+const prefixProjectName = "Winfitts";
+const postfixProjectName = "";
 
-test.describe('Validate Winfitts', () => {
+test.describe("Validate Winfitts", () => {
     test.beforeEach(async ({ page }) => {
         await Login(page)
     });
 
-    test('Winfitts', async({ page, context }) => {
+    test("Winfitts", async({ page, context }) => {
         await page.setViewportSize({
             width: Width,
             height: Height,
@@ -53,10 +53,10 @@ test.describe('Validate Winfitts', () => {
             ProjectName: projectName,
             CreatedBy: Email,
         });
-        expect(project.Id).not.toEqual('');
+        expect(project.Id).not.toEqual("");
 
         const device = await DeviceDetails(page, project.Id);
-        expect(device.Id).not.toEqual('');
+        expect(device.Id).not.toEqual("");
 
         await SetupCalibration(token, cookie, {
             Project: project,
@@ -74,9 +74,10 @@ test.describe('Validate Winfitts', () => {
         for(let i = 0; i < participants.length; i++) {
             const winfitts = await StartSingleWinfitts(page, device, participants[i]);
             partice.push(winfitts);
-        };
+        }
         // TODO: compare partice and result
         const result = await FetchWinfittsResult(page, project.Result);
+
         // TODO: compare partice and rawdata
         const rawdata = await FetchWinfittsRawData(page, project.Result);
         expect(rawdata.length).toEqual(ParticipantCount);
