@@ -6,6 +6,7 @@ import { Participant } from './participant';
 import {
     Calibrate,
     ContentType,
+    EnableTimeSleep,
     Method,
     ProjectStatus,
     URL,
@@ -171,7 +172,7 @@ interface ExceptedWinfittsResult {
 };
 
 const newClickEvent = (x: number, y: number, timestamp: number): clickEvent => {
-    return {X: x, Y: y, Timestamp: timestamp};
+    return { X: x, Y: y, Timestamp: timestamp };
 };
 
 const TotalTrailCount = 32;
@@ -193,7 +194,7 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
         const startBox = await start.boundingBox();
         const targetBox = await target.boundingBox();
 
-        await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
+        if (EnableTimeSleep) await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
         await start.click();
         const result: SingleWinfittsResult = {
             Start: newClickEvent(0, 0, Math.floor(Date.now())),
@@ -221,7 +222,7 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
             const sleepRange = timeSleepByDifficulty(difficulty);
             const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
 
-            await new Promise(f => setTimeout(f, sleepTime));
+            if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
             const hasFail = Math.random() * 100 <= WinfittsFailedRate * difficulty/(1.6+3.5+5.7);
 
             if (hasFail) {
@@ -232,7 +233,7 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
                 const timestamp = Math.floor(Date.now());
                 result.Else = newClickEvent(x, y, timestamp);
                 const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
-                await new Promise(f => setTimeout(f, sleepTime));
+                if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
             };
         };
         await page.waitForSelector('.target.dot.light');
@@ -241,7 +242,7 @@ const StartSingleWinfitts = async(page: Page, device: Device, participant: Parti
         output.push(result);
     };
     await page.getByRole('button', { name: 'Finish' }).click();
-    return {Account: participant.Account, Results: output};
+    return { Account: participant.Account, Results: output };
 };
 
 interface SingleActualWinfittsResult {
