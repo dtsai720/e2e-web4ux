@@ -18,7 +18,6 @@ repos:
   rev: "v8.41.0"
   hooks:
     - id: eslint
-      files: \.ts$
 - repo: https://github.com/awebdeveloper/pre-commit-stylelint
   rev: "0.0.2"
   hooks:
