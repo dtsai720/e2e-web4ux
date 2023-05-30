@@ -24,40 +24,20 @@ const WinfittsFailedRate = parseInt(
     process.env.WinfittsFailedRate || defaultWinfittsFailedRate.toString()
 );
 const EnableTimeSleep = process.env.EnableTimeSleep === "True";
-
-const ContentType = {
-    Form: "application/x-www-form-urlencoded; charset=UTF-8",
-};
-const Method = {
-    Post: "POST",
-};
 const ProjectStatus = "Draft";
-const URL = {
-    Login: `${Host}/Home/Login`,
-    Home: `${Host}/Project`,
-    CreateProject: `${Host}/Project/Add`,
-    ListProject: `${Host}/Project/_Projects`,
-    FetchDevicePrefix: `${Host}/Project/Devices`,
-    CalibrateDevicePrefix: `${Host}/Project/DeviceSetting`,
-    FetchParticipantPrefix: `${Host}/Project/Participants`,
-    StartWinfittsPrefix: `${ExperimentHost}/Login`,
-    WinfittsResultPrefix: `${Host}/Project/WinfittsResult`,
-    WinfittsRawDataPrefix: `${Host}/Project/WinfittsRowData`,
-};
 
 export {
+    Host,
+    ExperimentHost,
     Calibrate,
-    ContentType,
     DeviceName,
     EnableTimeSleep,
     Email,
     Height,
-    Method,
     ModelName,
     Password,
     ParticipantCount,
     ProjectStatus,
-    URL,
     Width,
     WinfittsFailedRate,
 };

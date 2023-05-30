@@ -1,54 +1,44 @@
-import { Page } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 
-import { Project } from "./project";
+import { SimpleProject } from "./project";
 import { Device } from "./device";
 import { Participant } from "./participant";
-import {
-    Calibrate,
-    ContentType,
-    EnableTimeSleep,
-    Method,
-    ProjectStatus,
-    URL,
-    WinfittsFailedRate,
-} from "./config";
+import { ContentType, Method, URL, Button, Label, CSRFToken, Tag } from "./http";
+import { Calibrate, EnableTimeSleep, ProjectStatus, WinfittsFailedRate } from "./config";
+import { EuclideanDistance } from "./math";
 
-interface createWinfittsRequest {
+interface CreateWinfittsRequest {
     ProjectName: string;
     ModelName: string;
     DeviceName: string;
     ParticipantCount: number;
 }
 
-interface winfittsSetting {
+interface WinfittsSetting {
     Width: number;
     Distance: number;
     Difficulty: number;
 }
 
-const NewWinfittsSetting = (
-    width: number,
-    distance: number,
-    difficulty: number
-): winfittsSetting => {
-    return { Width: width, Distance: distance, Difficulty: difficulty };
-};
-
-const settings: Array<winfittsSetting> = [
-    NewWinfittsSetting(3, 150, 5.7),
-    NewWinfittsSetting(15, 150, 3.5),
-    NewWinfittsSetting(3, 30, 3.5),
-    NewWinfittsSetting(15, 30, 1.6),
+const settings: Array<WinfittsSetting> = [
+    { Width: 3, Distance: 150, Difficulty: 5.7 },
+    { Width: 15, Distance: 150, Difficulty: 3.5 },
+    { Width: 3, Distance: 30, Difficulty: 3.5 },
+    { Width: 15, Distance: 30, Difficulty: 1.6 },
 ];
 
 const TaskType = "Winfitts";
 
-const WinfittsProject = async (token: string, cookie: string, request: createWinfittsRequest) => {
+const CreateWinfittsProject = async (
+    token: string,
+    cookie: string,
+    request: CreateWinfittsRequest
+) => {
     const param = new URLSearchParams();
 
     param.append("ProjectName", request.ProjectName);
     param.append("ParticipantCount", request.ParticipantCount.toString());
-    param.append("__RequestVerificationToken", token);
+    param.append(CSRFToken, token);
 
     param.append("Devices[0].ModelName", request.ModelName);
     param.append("Devices[0].DeviceName", request.DeviceName);
@@ -70,11 +60,11 @@ const WinfittsProject = async (token: string, cookie: string, request: createWin
 
     await fetch(URL.CreateProject, {
         headers: {
-            "content-type": ContentType.Form,
+            "content-type": ContentType.FROM,
             cookie: cookie,
         },
         body: param.toString(),
-        method: Method.Post,
+        method: Method.POST,
     });
 };
 
@@ -87,8 +77,8 @@ const NewResolution = (w: number, h: number): resolution => {
     return { Width: w, Height: h };
 };
 
-interface calibrationRequest {
-    Project: Project;
+interface CalibrationRequest {
+    Project: SimpleProject;
     Device: Device;
     Calibrate: number;
     DeviceResolution: resolution;
@@ -96,169 +86,210 @@ interface calibrationRequest {
     OuterResolution: resolution;
 }
 
-const SetupCalibration = async (token: string, cookie: string, request: calibrationRequest) => {
-    const param = new URLSearchParams();
+const CalibratedParams = {
+    ProjectId: "ProjectId",
+    ProjectName: "ProjectName",
+    ProjectStauts: "ProjectStauts",
+    DeviceId: "DeviceId",
+    ModelName: "ModelName",
+    DeviceName: "DeviceName",
+    Calibrate: "Calibrate",
+    DeviceWidth: "DeviceWidth",
+    DeviceHeight: "DeviceHeight",
+    InnerWidth: "InnerWidth",
+    InnerHeight: "InnerHeight",
+    OuterWidth: "OuterWidth",
+    OuterHeight: "OuterHeight",
+};
 
-    param.append("ProjectId", request.Project.Id);
-    param.append("ProjectName", request.Project.Name);
-    param.append("ProjectStauts", ProjectStatus);
-    param.append("DeviceId", request.Device.Id);
-    param.append("ModelName", request.Device.ModelName);
-    param.append("DeviceName", request.Device.DeviceName);
-    param.append("Calibrate", request.Calibrate.toString());
+const SetupCalibration = async (token: string, cookie: string, request: CalibrationRequest) => {
+    const params = new URLSearchParams();
+    params.append(CalibratedParams.ProjectId, request.Project.Id);
+    params.append(CalibratedParams.ProjectName, request.Project.Name);
+    params.append(CalibratedParams.ProjectStauts, ProjectStatus);
+    params.append(CalibratedParams.DeviceId, request.Device.Id);
+    params.append(CalibratedParams.ModelName, request.Device.ModelName);
+    params.append(CalibratedParams.DeviceName, request.Device.DeviceName);
+    params.append(CalibratedParams.Calibrate, request.Calibrate.toString());
 
-    param.append("DeviceWidth", request.DeviceResolution.Width.toString());
-    param.append("DeviceHeight", request.DeviceResolution.Height.toString());
+    params.append(CalibratedParams.DeviceWidth, request.DeviceResolution.Width.toString());
+    params.append(CalibratedParams.DeviceHeight, request.DeviceResolution.Height.toString());
 
-    param.append("InnerWidth", request.InnerResolution.Width.toString());
-    param.append("InnerHeight", request.InnerResolution.Height.toString());
+    params.append(CalibratedParams.InnerWidth, request.InnerResolution.Width.toString());
+    params.append(CalibratedParams.InnerHeight, request.InnerResolution.Height.toString());
 
-    param.append("OuterWidth", request.OuterResolution.Width.toString());
-    param.append("OuterHeight", request.OuterResolution.Height.toString());
-    param.append("__RequestVerificationToken", token);
+    params.append(CalibratedParams.OuterWidth, request.OuterResolution.Width.toString());
+    params.append(CalibratedParams.OuterHeight, request.OuterResolution.Height.toString());
+    params.append(CSRFToken, token);
 
     await fetch([URL.CalibrateDevicePrefix, request.Project.Id].join("/"), {
         headers: {
-            "content-type": ContentType.Form,
+            "content-type": ContentType.FROM,
             cookie: cookie,
         },
-        body: param.toString(),
-        method: Method.Post,
+        body: params.toString(),
+        method: Method.POST,
     });
 };
 
-const normalizedWidth = (w: number): number => {
-    return Math.abs(w - 3) < Math.abs(w - 15) ? 3 : 15;
-};
-
-const normalizedDistance = (d: number): number => {
-    return Math.abs(d - 30) < Math.abs(d - 150) ? 30 : 150;
-};
-
-const convertToDifficulty = (w: number, d: number): number => {
-    const width = normalizedWidth(w);
-    const distance = normalizedDistance(d);
-    if (width === 3) return distance === 30 ? 3.5 : 5.7;
-    return distance === 30 ? 1.6 : 3.5;
-};
-
-interface range {
-    Max: number;
-    Min: number;
-}
-
-const timeSleepByDifficulty = (diff: number): range => {
-    switch (diff) {
-        case 1.6:
-            return { Max: 500, Min: 350 };
-        case 3.5:
-            return { Max: 750, Min: 500 };
-        case 5.7:
-            return { Max: 1200, Min: 900 };
-    }
-    return { Max: 300, Min: 100 };
-};
-
-interface clickEvent {
+interface ClickEvent {
     X: number;
     Y: number;
     Timestamp: number;
 }
 
 interface SingleWinfittsResult {
-    Start: clickEvent;
-    Target: clickEvent;
-    Else: clickEvent | null;
+    Start: ClickEvent;
+    Target: ClickEvent;
+    Else: ClickEvent | null;
     Width: number;
     Distance: number;
 }
+
+const NewSingleWinfittsResult = (): SingleWinfittsResult => {
+    return {
+        Start: NewClickEvent(0, 0, 0),
+        Target: NewClickEvent(0, 0, 0),
+        Else: null,
+        Width: 0,
+        Distance: 0,
+    };
+};
 
 interface ExceptedWinfittsResult {
     Account: string;
     Results: Array<SingleWinfittsResult>;
 }
 
-const newClickEvent = (x: number, y: number, timestamp: number): clickEvent => {
+const NewClickEvent = (x: number, y: number, timestamp: number): ClickEvent => {
     return { X: x, Y: y, Timestamp: timestamp };
 };
 
 const TotalTrailCount = 32;
+const Link = "link";
+const Selector = {
+    Pratices: {
+        Start: ".start.dot",
+        Target: ".target.dot",
+        Light: {
+            Start: ".start.dot.light",
+            Target: ".target.dot.light",
+        },
+    },
+    Result: {
+        Table: "#formRemoveRowData > div.block-table > table > tbody",
+    },
+    RawData: {
+        Table: "#divData",
+        Head: "div.data1 > span",
+        Row: "div.data1-pack",
+        TrailPack: "div.data2-pack",
+        SimpleRow: "div.data2 > span",
+        ClickResults: "div.data3",
+    },
+};
 
-const StartSingleWinfitts = async (
-    page: Page,
-    device: Device,
-    participant: Participant
-): Promise<ExceptedWinfittsResult> => {
-    await page.goto([URL.StartWinfittsPrefix, device.Id].join("/"));
+class WinfittsPratices {
+    private account: string;
+    private url: string;
 
-    await page.getByLabel("Account").fill(participant.Account);
-    await page.getByRole("button", { name: "Starts" }).click();
-    await page.getByRole("link", { name: "Start" }).click();
-    await page.getByRole("button", { name: "Start" }).click();
+    constructor(device: Device, participant: Participant) {
+        this.url = [URL.StartWinfittsPrefix, device.Id].join("/");
+        this.account = participant.Account;
+    }
 
-    const output: Array<SingleWinfittsResult> = [];
-    for (let i = 0; i < TotalTrailCount; i++) {
-        await page.waitForSelector(".start.dot.light");
-        const start = await page.locator(".start.dot");
-        const target = await page.locator(".target.dot");
+    private width(w: number): number {
+        return Math.abs(w - 3) < Math.abs(w - 15) ? 3 : 15;
+    }
+
+    private distance(d: number): number {
+        return Math.abs(d - 30) < Math.abs(d - 150) ? 30 : 150;
+    }
+
+    private difficulty(w: number, d: number): number {
+        const width = this.width(w);
+        const distance = this.distance(d);
+        if (width === 3) return distance === 30 ? 3.5 : 5.7;
+        return distance === 30 ? 1.6 : 3.5;
+    }
+
+    private range(d: number) {
+        if (d == 1.6) return { Max: 500, Min: 350 };
+        if (d == 3.5) return { Max: 750, Min: 500 };
+        if (d == 5.7) return { Max: 1200, Min: 900 };
+        return { Max: 300, Min: 100 };
+    }
+
+    private hasFailed(d: number): boolean {
+        return Math.random() * 100 <= (WinfittsFailedRate * d) / (1.6 + 3.5 + 5.7);
+    }
+
+    private async eachTrail(page: Page): Promise<SingleWinfittsResult> {
+        await page.waitForSelector(Selector.Pratices.Light.Start);
+        const start = await page.locator(Selector.Pratices.Start);
+        const target = await page.locator(Selector.Pratices.Target);
         const startBox = await start.boundingBox();
         const targetBox = await target.boundingBox();
 
         if (EnableTimeSleep) await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
         await start.click();
-        const result: SingleWinfittsResult = {
-            Start: newClickEvent(0, 0, Math.floor(Date.now())),
-            Target: newClickEvent(0, 0, 0),
-            Else: null,
-            Width: 0,
-            Distance: 0,
-        };
+        const result = NewSingleWinfittsResult();
+        result.Start.Timestamp = Math.floor(Date.now());
 
         if (startBox !== null && targetBox !== null) {
             result.Start.X = startBox["x"];
             result.Start.Y = startBox["y"];
             result.Target.X = targetBox["x"];
             result.Target.Y = targetBox["y"];
-
             const distance =
-                Math.pow(
-                    Math.pow(result.Start.X - result.Target.X, 2) +
-                        Math.pow(result.Start.Y - result.Target.Y, 2),
-                    0.5
+                EuclideanDistance(
+                    result.Start.X,
+                    result.Target.X,
+                    result.Start.Y,
+                    result.Target.Y
                 ) / Calibrate;
             const width = targetBox["width"] / Calibrate;
 
-            result.Width = normalizedWidth(width);
-            result.Distance = normalizedDistance(distance);
+            result.Width = this.width(width);
+            result.Distance = this.distance(distance);
 
-            const difficulty = convertToDifficulty(width, distance);
-            const sleepRange = timeSleepByDifficulty(difficulty);
-            const sleepTime = Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
-
+            const difficulty = this.difficulty(width, distance);
+            const range = this.range(difficulty);
+            const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
             if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
-            const hasFail =
-                Math.random() * 100 <= (WinfittsFailedRate * difficulty) / (1.6 + 3.5 + 5.7);
 
-            if (hasFail) {
+            if (this.hasFailed(difficulty)) {
                 const x = (result.Start.X + result.Target.X) / 2;
                 const y = (result.Start.Y + result.Target.Y) / 2;
+                await page.mouse.move(x, y);
                 await page.mouse.click(x, y);
 
-                const timestamp = Math.floor(Date.now());
-                result.Else = newClickEvent(x, y, timestamp);
-                const sleepTime =
-                    Math.random() * (sleepRange.Max - sleepRange.Min) + sleepRange.Min;
+                result.Else = NewClickEvent(x, y, Math.floor(Date.now()));
+                const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
                 if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
             }
         }
-        await page.waitForSelector(".target.dot.light");
+        await page.waitForSelector(Selector.Pratices.Light.Target);
+        await page.mouse.move(result.Target.X, result.Target.Y);
         await target.click();
         result.Target.Timestamp = Math.floor(Date.now());
-        output.push(result);
+        return result;
     }
-    await page.getByRole("button", { name: "Finish" }).click();
-    return { Account: participant.Account, Results: output };
-};
+
+    async start(page: Page) {
+        await page.goto(this.url);
+        await page.getByLabel(Label.Account).fill(this.account);
+        await page.getByRole(Button, { name: "Starts" }).click();
+        await page.getByRole(Link, { name: "Start" }).click();
+        await page.getByRole(Button, { name: "Start" }).click();
+        const output: Array<SingleWinfittsResult> = [];
+        for (let i = 0; i < TotalTrailCount; i++) {
+            output.push(await this.eachTrail(page));
+        }
+        await page.getByRole(Button, { name: "Finish" }).click();
+        return { Account: this.account, Results: output };
+    }
+}
 
 interface SingleActualWinfittsResult {
     Id: number;
@@ -273,46 +304,60 @@ interface ActualWinfittsResults {
     Results: Array<SingleActualWinfittsResult>;
 }
 
-const FetchWinfittsResult = async (
-    page: Page,
-    id: string
-): Promise<Array<ActualWinfittsResults>> => {
-    await page.goto([URL.WinfittsResultPrefix, id].join("/"));
-    const table = await page.locator("#formRemoveRowData > div.block-table > table > tbody");
-    const rows: Array<Array<string>> = [];
-    // Fetch All element from table.
-    for (const row of await table.locator("tr").all()) {
-        const array: Array<string> = [];
-        for (const data of await row.locator("td").all()) {
-            const text = (await data.textContent()) || "";
-            if (text.trim() === "") continue;
-            array.push(text.trim());
-        }
-        rows.push(array);
+class WinfittsResult {
+    private url: string;
+
+    constructor(id: string) {
+        this.url = [URL.WinfittsResultPrefix, id].join("/");
     }
 
-    // Group element by account.
-    const output: Array<ActualWinfittsResults> = [];
-    for (let i = 0; i < rows.length; i += 4) {
-        rows[i].shift(); // remove index
-        const account = rows[i].shift() || "";
+    private toWinfittsResult(array: Array<Array<string>>, account: string, start: number) {
         const result: ActualWinfittsResults = { Account: account, Results: [] };
-
-        for (let j = 0; j < 4; j++) {
-            const Id = parseFloat(rows[i + j][0]);
-            const wd = rows[i + j][1].split("/");
+        for (let i = 0; i < 4; i++) {
+            const Id = parseFloat(array[start + i][0]);
+            const wd = array[start + i][1].split("/");
             const Width = parseInt(wd[0]);
             const Distance = parseInt(wd[1]);
-            const CursorMovementTime = parseInt(rows[i + j][2]);
-            const ErrorRate = parseFloat(rows[i + j][3].replace(" %", "")) * 0.01;
+            const CursorMovementTime = parseInt(array[start + i][2]);
+            const ErrorRate = parseFloat(array[start + i][3].replace(" %", "")) * 0.01;
             result.Results.push({ Id, Width, Distance, CursorMovementTime, ErrorRate });
         }
-        output.push(result);
+        return result;
     }
-    return output;
-};
 
-interface WinfittsRow {
+    private toCanonical(array: Array<Array<string>>): Array<ActualWinfittsResults> {
+        const output: Array<ActualWinfittsResults> = [];
+        for (let i = 0; i < array.length; i += 4) {
+            array[i].shift(); // remove index
+            const account = array[i].shift() || "";
+            output.push(this.toWinfittsResult(array, account, i));
+        }
+        return output;
+    }
+
+    private async parse(page: Page): Promise<Array<Array<string>>> {
+        const rows: Array<Array<string>> = [];
+        const table = await page.locator(Selector.Result.Table);
+        for (const row of await table.locator(Tag.Tr).all()) {
+            const array: Array<string> = [];
+            for (const data of await row.locator(Tag.Td).all()) {
+                const text = (await data.textContent()) || "";
+                if (text.trim() === "") continue;
+                array.push(text.trim());
+            }
+            rows.push(array);
+        }
+        return rows;
+    }
+
+    async fetch(page: Page): Promise<Array<ActualWinfittsResults>> {
+        await page.goto(this.url);
+        const array = await this.parse(page);
+        return this.toCanonical(array);
+    }
+}
+
+interface SimpleWinfittsRow {
     TrailNumber: number;
     IsFailed: boolean;
     ErrorTime: number;
@@ -321,9 +366,12 @@ interface WinfittsRow {
     Id: number;
     Angle: number;
     EventTime: number;
-    Start: clickEvent;
-    Target: clickEvent;
-    Else: Array<clickEvent>;
+}
+
+interface WinfittsRow extends SimpleWinfittsRow {
+    Start: ClickEvent;
+    Target: ClickEvent;
+    Else: Array<ClickEvent>;
 }
 
 interface SingleWinfitts {
@@ -335,101 +383,119 @@ interface SingleWinfitts {
     Results: Array<WinfittsRow>;
 }
 
-const EventTypeStart = "start";
-const EventTypeTarget = "target";
-const EventTypeElse = "else";
+const EventType = {
+    Start: "start",
+    Target: "target",
+    Else: "else",
+};
 
-const FetchWinfittsRawData = async (page: Page, id: string): Promise<Array<SingleWinfitts>> => {
-    await page.goto([URL.WinfittsRawDataPrefix, id].join("/"));
-    await page.waitForSelector("#divData");
-    const table = await page.locator("#divData");
-    const output: Array<SingleWinfitts> = [];
+class WinfittsRawData {
+    private url: string;
+    constructor(id: string) {
+        this.url = [URL.WinfittsRawDataPrefix, id].join("/");
+    }
 
-    for (const row of await table.locator("div.data1-pack").all()) {
-        const title: Array<string> = [];
-        const participant: SingleWinfitts = {
-            Account: "",
-            ModelName: "",
-            DeviceName: "",
-            ErrorRate: "",
-            EventTime: 0,
-            Results: [],
-        };
-
-        for (const each of await row.locator(".data1 > span").all()) {
-            const text = (await each.textContent()) || "";
-            title.push(text.trim());
+    private async head(locator: Locator) {
+        const array: Array<string> = [];
+        for (const column of await locator.locator(Selector.RawData.Head).all()) {
+            const text = (await column.textContent()) || "";
+            array.push(text.trim());
         }
+        return {
+            Account: array[1],
+            ModelName: array[2],
+            DeviceName: array[3],
+            ErrorRate: array[4],
+            EventTime: parseInt(array[5]),
+        };
+    }
 
-        participant.Account = title[1];
-        participant.ModelName = title[2];
-        participant.DeviceName = title[3];
-        participant.ErrorRate = title[4];
-        participant.EventTime = parseInt(title[5]);
+    private async toSimpleWinfittsRow(locator: Locator): Promise<SimpleWinfittsRow> {
+        const array: Array<string> = [];
+        for (const column of await locator.locator(Selector.RawData.SimpleRow).all()) {
+            const text = (await column.textContent()) || "";
+            array.push(text.trim());
+        }
+        return {
+            TrailNumber: parseInt(array[0]),
+            IsFailed: array[1] === "Yes",
+            ErrorTime: parseInt(array[2]),
+            Width: parseInt(array[3]),
+            Distance: parseInt(array[4]),
+            Id: parseFloat(array[5]),
+            Angle: parseInt(array[6]),
+            EventTime: parseInt(array[7]),
+        };
+    }
 
-        for (const each of await row.locator("div.data2-pack").all()) {
+    private async trail(locator: Locator): Promise<Array<WinfittsRow>> {
+        const output: Array<WinfittsRow> = [];
+        for (const each of await locator.locator(Selector.RawData.TrailPack).all()) {
+            const simple = await this.toSimpleWinfittsRow(each);
             const result: WinfittsRow = {
-                TrailNumber: 0,
-                IsFailed: false,
-                ErrorTime: 0,
-                Width: 0,
-                Distance: 0,
-                Id: 0,
-                Angle: 0,
-                EventTime: 0,
-                Start: newClickEvent(0, 0, 0),
-                Target: newClickEvent(0, 0, 0),
+                TrailNumber: simple.TrailNumber,
+                IsFailed: simple.IsFailed,
+                ErrorTime: simple.ErrorTime,
+                Width: simple.Width,
+                Distance: simple.Distance,
+                Id: simple.Id,
+                Angle: simple.Angle,
+                EventTime: simple.EventTime,
+                Start: NewClickEvent(0, 0, 0),
+                Target: NewClickEvent(0, 0, 0),
                 Else: [],
             };
 
-            for (const data of await each.locator("div.data2").all()) {
+            if (isNaN(simple.TrailNumber)) continue;
+            for (const data of await each.locator(Selector.RawData.ClickResults).all()) {
                 const array: Array<string> = [];
-                for (const column of await data.locator("span").all()) {
-                    const text = (await column.textContent()) || "";
-                    array.push(text.trim());
-                }
-                result.TrailNumber = parseInt(array[0]);
-                result.IsFailed = array[1] === "Yes";
-                result.ErrorTime = parseInt(array[2]);
-                result.Width = parseInt(array[3]);
-                result.Distance = parseInt(array[4]);
-                result.Id = parseFloat(array[5]);
-                result.Angle = parseInt(array[6]);
-                result.EventTime = parseInt(array[7]);
-            }
-
-            for (const data of await each.locator("div.data3").all()) {
-                const array: Array<string> = [];
-                for (const column of await data.locator("span").all()) {
+                for (const column of await data.locator(Tag.Span).all()) {
                     const text = (await column.textContent()) || "";
                     array.push(text.trim());
                 }
                 array[1] = array[1].slice(1, -1);
                 const position = array[1].split(",");
-                const event = newClickEvent(
+                const event = NewClickEvent(
                     parseInt(position[0].trim()),
                     parseInt(position[1].trim()),
                     parseInt(array[2])
                 );
-                if (array[0] === EventTypeStart) result.Start = event;
-                if (array[0] === EventTypeTarget) result.Target = event;
-                if (array[0] === EventTypeElse) result.Else.push(event);
+                if (array[0] === EventType.Start) result.Start = event;
+                if (array[0] === EventType.Target) result.Target = event;
+                if (array[0] === EventType.Else) result.Else.push(event);
             }
-            if (isNaN(result.TrailNumber)) continue;
-            participant.Results.push(result);
+            output.push(result);
         }
-        output.push(participant);
+        return output;
     }
-    return output;
-};
+
+    async fetch(page: Page): Promise<Array<SingleWinfitts>> {
+        await page.goto(this.url);
+        await page.waitForSelector(Selector.RawData.Table);
+        const table = await page.locator(Selector.RawData.Table);
+        const output: Array<SingleWinfitts> = [];
+        for (const row of await table.locator(Selector.RawData.Row).all()) {
+            const participant = await this.head(row);
+            output.push({
+                Account: participant.Account,
+                DeviceName: participant.DeviceName,
+                ModelName: participant.ModelName,
+                ErrorRate: participant.ErrorRate,
+                EventTime: participant.EventTime,
+                Results: await this.trail(row),
+            });
+        }
+        return output;
+    }
+}
 
 export {
-    WinfittsProject,
+    CreateWinfittsProject,
     SetupCalibration,
     NewResolution,
-    StartSingleWinfitts,
+    WinfittsPratices,
     ExceptedWinfittsResult,
-    FetchWinfittsResult,
-    FetchWinfittsRawData,
     TotalTrailCount,
+    WinfittsResult,
+    WinfittsRawData,
 };

@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
 
-import { URL } from "./config";
+import { URL, Attribute } from "./http";
 
 interface Device {
     ModelName: string;
@@ -8,14 +8,23 @@ interface Device {
     Id: string;
 }
 
+const Selector = {
+    ModelName: "input.modelname",
+    DeviceName: "input.devicename",
+    Id: "input.id",
+    TableRow: "#table-drop > tr",
+};
+
 const DeviceDetails = async (page: Page, projectId: string): Promise<Device> => {
     await page.goto([URL.FetchDevicePrefix, projectId].join("/"));
-    await page.waitForSelector("#table-drop > tr");
-    const locator = page.locator("#table-drop > tr");
-    const ModelName = (await locator.locator("input.modelname").getAttribute("value")) || "";
-    const DeviceName = (await locator.locator("input.devicename").getAttribute("value")) || "";
-    const Id = (await locator.locator("input.id").getAttribute("value")) || "";
-    return { ModelName, DeviceName, Id };
+    await page.waitForSelector(Selector.TableRow);
+    const locator = page.locator(Selector.TableRow);
+    return {
+        ModelName: (await locator.locator(Selector.ModelName).getAttribute(Attribute.Value)) || "",
+        DeviceName:
+            (await locator.locator(Selector.DeviceName).getAttribute(Attribute.Value)) || "",
+        Id: (await locator.locator(Selector.Id).getAttribute(Attribute.Value)) || "",
+    };
 };
 
 export { DeviceDetails, Device };
