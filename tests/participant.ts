@@ -8,23 +8,23 @@ interface Participant {
 }
 
 const Selector = {
-    Id: (num: number): string => {
+    Id: (num: number) => {
         return `input[name=\"Participants[${num}].Id\"]`;
     },
-    Account: (num: number): string => {
+    Account: (num: number) => {
         return `input[name=\"Participants[${num}].Account\"]`;
     },
-};
+} as const;
 
 const ParticipantDetail = async (
     page: Page,
     projectId: string,
     participantCount: number
-): Promise<Array<Participant>> => {
+): Promise<Readonly<Participant[]>> => {
     await page.goto([URL.FetchParticipantPrefix, projectId].join("/"));
     await page.waitForSelector(Tag.Table);
 
-    const output: Array<Participant> = [];
+    const output: Participant[] = [];
     for (let i = 0; i < participantCount; i++) {
         output.push({
             Id: (await page.locator(Selector.Id(i)).getAttribute(Attribute.Value)) || "",

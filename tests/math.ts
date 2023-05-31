@@ -1,4 +1,4 @@
-const RadiasToDegree = (rad: number): number => {
+const RadiasToDegree = (rad: number) => {
     return (rad * 180) / Math.PI;
 };
 

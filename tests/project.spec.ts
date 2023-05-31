@@ -1,13 +1,21 @@
 import { test, expect } from "@playwright/test";
 
 import { ParticipantCount, ModelName, DeviceName } from "./config";
-import { URL } from "./http";
+import { URL, Role } from "./http";
 import { Login } from "./login";
 import { NewProjectName } from "./project";
 
 const ExpandSettingPostfix = "div.title > span.icon-toggle.collapse";
 const DocumentPopUP = "div.main-content > div.modal.documentup-modal.show > div > div.modal-body";
-
+const prefix = "ALL";
+const Input = {
+    ParticipantCount: ParticipantCount.toString(),
+    ModelName: ModelName,
+    DeviceName: DeviceName,
+    TotalTimer: "1",
+    CountdownTimer: "60",
+    TextName: "What Is Yoga?",
+} as const;
 const Selector = {
     WaitFor: {
         Page1: "#divStep1",
@@ -58,18 +66,7 @@ const Selector = {
         },
     },
     NextButton: "#btnNext",
-};
-const ListItem = "listitem";
-const prefix = "ALL";
-
-const Input = {
-    ParticipantCount: ParticipantCount.toString(),
-    ModelName: ModelName,
-    DeviceName: DeviceName,
-    TotalTimer: "1",
-    CountdownTimer: "60",
-    TextName: "What Is Yoga?",
-};
+} as const;
 
 test.describe("Validate Project", () => {
     test.beforeEach(async ({ page }) => {
@@ -104,7 +101,7 @@ test.describe("Validate Project", () => {
 
         await page.waitForSelector(Selector.Page2.Typing.Document.PopUp);
         await page.locator(Selector.Page2.Typing.Document.Select).click();
-        await page.getByRole(ListItem).filter({ hasText: Input.TextName }).click();
+        await page.getByRole(Role.ListItem).filter({ hasText: Input.TextName }).click();
         await page.locator(Selector.Page2.Typing.Document.Choose).click();
         await page.locator(Selector.NextButton).click();
 

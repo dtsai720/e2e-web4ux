@@ -1,13 +1,13 @@
 import { test, expect, Page } from "@playwright/test";
 
 import { Email, Password } from "./config";
-import { URL, Button, Label } from "./http";
+import { URL, Role, Label } from "./http";
 
-const redirectURL = async (page: Page, email: string, password: string): Promise<string> => {
+const redirectURL = async (page: Page, email: string, password: string) => {
     await page.goto(URL.Login);
     await page.getByLabel(Label.Email).fill(email);
     await page.getByLabel(Label.Password).fill(password);
-    await page.getByRole(Button, { name: "Login" }).click();
+    await page.getByRole(Role.Button, { name: Role.Name.Login }).click();
     return await page.url();
 };
 

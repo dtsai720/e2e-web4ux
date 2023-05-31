@@ -3,7 +3,7 @@ import { Locator, Page } from "@playwright/test";
 import { SimpleProject } from "./project";
 import { Device } from "./device";
 import { Participant } from "./participant";
-import { ContentType, Method, URL, Button, Label, CSRFToken, Tag } from "./http";
+import { ContentType, Method, URL, Role, Label, CSRFToken, Tag } from "./http";
 import { Calibrate, EnableTimeSleep, ProjectStatus, WinfittsFailedRate } from "./config";
 import { EuclideanDistance } from "./math";
 
@@ -14,20 +14,41 @@ interface CreateWinfittsRequest {
     ParticipantCount: number;
 }
 
-interface WinfittsSetting {
-    Width: number;
-    Distance: number;
-    Difficulty: number;
-}
-
-const settings: Array<WinfittsSetting> = [
+const settings = [
     { Width: 3, Distance: 150, Difficulty: 5.7 },
     { Width: 15, Distance: 150, Difficulty: 3.5 },
     { Width: 3, Distance: 30, Difficulty: 3.5 },
     { Width: 15, Distance: 30, Difficulty: 1.6 },
-];
+] as const;
 
 const TaskType = "Winfitts";
+const ProjectParams = {
+    ProjectName: "ProjectName",
+    ParticipantCount: "ParticipantCount",
+    Token: CSRFToken,
+    ModelName: "Devices[0].ModelName",
+    DeviceName: "Devices[0].DeviceName",
+    Sort: "Devices[0].Sort",
+    Task: {
+        Type: "Tasks[0].TaskType",
+        Sort: "Tasks[0].Sort",
+        TrailsTestRound: "Tasks[0].TrailsTestRound",
+    },
+    Winfitts: {
+        Width: (num: number) => {
+            return `Tasks[0].WinfittsSettings[${num}].Width`;
+        },
+        Distance: (num: number) => {
+            return `Tasks[0].WinfittsSettings[${num}].Distance`;
+        },
+        Sort: (num: number) => {
+            return `Tasks[0].WinfittsSettings[${num}].Sort`;
+        },
+        Difficulty: (num: number) => {
+            return `Tasks[0].WinfittsSettings[${num}].Difficulty`;
+        },
+    },
+} as const;
 
 const CreateWinfittsProject = async (
     token: string,
@@ -36,26 +57,23 @@ const CreateWinfittsProject = async (
 ) => {
     const param = new URLSearchParams();
 
-    param.append("ProjectName", request.ProjectName);
-    param.append("ParticipantCount", request.ParticipantCount.toString());
-    param.append(CSRFToken, token);
+    param.append(ProjectParams.ProjectName, request.ProjectName);
+    param.append(ProjectParams.ParticipantCount, request.ParticipantCount.toString());
+    param.append(ProjectParams.Token, token);
 
-    param.append("Devices[0].ModelName", request.ModelName);
-    param.append("Devices[0].DeviceName", request.DeviceName);
-    param.append("Devices[0].Sort", "0");
+    param.append(ProjectParams.ModelName, request.ModelName);
+    param.append(ProjectParams.DeviceName, request.DeviceName);
+    param.append(ProjectParams.Sort, "0");
 
-    param.append("Tasks[0].TaskType", TaskType);
-    param.append("Tasks[0].Sort", "0");
-    param.append("Tasks[0].TrailsTestRound", "1");
+    param.append(ProjectParams.Task.Type, TaskType);
+    param.append(ProjectParams.Task.Sort, "0");
+    param.append(ProjectParams.Task.TrailsTestRound, "1");
 
     for (let i = 0; i < settings.length; i++) {
-        param.append(`Tasks[0].WinfittsSettings[${i}].Width`, settings[i].Width.toString());
-        param.append(`Tasks[0].WinfittsSettings[${i}].Distance`, settings[i].Distance.toString());
-        param.append(`Tasks[0].WinfittsSettings[${i}].Sort`, i.toString());
-        param.append(
-            `Tasks[0].WinfittsSettings[${i}].Difficulty`,
-            settings[i].Difficulty.toString()
-        );
+        param.append(ProjectParams.Winfitts.Width(i), settings[i].Width.toString());
+        param.append(ProjectParams.Winfitts.Distance(i), settings[i].Distance.toString());
+        param.append(ProjectParams.Winfitts.Sort(i), i.toString());
+        param.append(ProjectParams.Winfitts.Difficulty(i), settings[i].Difficulty.toString());
     }
 
     await fetch(URL.CreateProject, {
@@ -68,12 +86,12 @@ const CreateWinfittsProject = async (
     });
 };
 
-interface resolution {
+interface Resolution {
     Width: number;
     Height: number;
 }
 
-const NewResolution = (w: number, h: number): resolution => {
+const NewResolution = (w: number, h: number): Resolution => {
     return { Width: w, Height: h };
 };
 
@@ -81,46 +99,59 @@ interface CalibrationRequest {
     Project: SimpleProject;
     Device: Device;
     Calibrate: number;
-    DeviceResolution: resolution;
-    InnerResolution: resolution;
-    OuterResolution: resolution;
+    Resolution: { Device: Resolution; Inner: Resolution; Outer: Resolution };
 }
 
-const CalibratedParams = {
-    ProjectId: "ProjectId",
-    ProjectName: "ProjectName",
-    ProjectStauts: "ProjectStauts",
-    DeviceId: "DeviceId",
+const CalibrateParams = {
+    Project: { Id: "ProjectId", Name: "ProjectName", Status: "ProjectStauts" },
+    Device: { Id: "DeviceId", Name: "DeviceName" },
+    Resolution: {
+        Device: { Width: "DeviceWidth", Height: "DeviceHeight" },
+        Inner: { Width: "InnerWidth", Height: "InnerHeight" },
+        Outer: { Width: "OuterWidth", Height: "OuterWidth" },
+    },
     ModelName: "ModelName",
-    DeviceName: "DeviceName",
     Calibrate: "Calibrate",
-    DeviceWidth: "DeviceWidth",
-    DeviceHeight: "DeviceHeight",
-    InnerWidth: "InnerWidth",
-    InnerHeight: "InnerHeight",
-    OuterWidth: "OuterWidth",
-    OuterHeight: "OuterHeight",
-};
+    Token: CSRFToken,
+} as const;
 
 const SetupCalibration = async (token: string, cookie: string, request: CalibrationRequest) => {
     const params = new URLSearchParams();
-    params.append(CalibratedParams.ProjectId, request.Project.Id);
-    params.append(CalibratedParams.ProjectName, request.Project.Name);
-    params.append(CalibratedParams.ProjectStauts, ProjectStatus);
-    params.append(CalibratedParams.DeviceId, request.Device.Id);
-    params.append(CalibratedParams.ModelName, request.Device.ModelName);
-    params.append(CalibratedParams.DeviceName, request.Device.DeviceName);
-    params.append(CalibratedParams.Calibrate, request.Calibrate.toString());
+    params.append(CalibrateParams.Project.Id, request.Project.Id);
+    params.append(CalibrateParams.Project.Name, request.Project.Name);
+    params.append(CalibrateParams.Project.Status, ProjectStatus);
+    params.append(CalibrateParams.Device.Id, request.Device.Id);
+    params.append(CalibrateParams.ModelName, request.Device.ModelName);
+    params.append(CalibrateParams.Device.Name, request.Device.DeviceName);
+    params.append(CalibrateParams.Calibrate, request.Calibrate.toString());
 
-    params.append(CalibratedParams.DeviceWidth, request.DeviceResolution.Width.toString());
-    params.append(CalibratedParams.DeviceHeight, request.DeviceResolution.Height.toString());
+    params.append(
+        CalibrateParams.Resolution.Device.Width,
+        request.Resolution.Device.Width.toString()
+    );
+    params.append(
+        CalibrateParams.Resolution.Device.Height,
+        request.Resolution.Device.Height.toString()
+    );
 
-    params.append(CalibratedParams.InnerWidth, request.InnerResolution.Width.toString());
-    params.append(CalibratedParams.InnerHeight, request.InnerResolution.Height.toString());
+    params.append(
+        CalibrateParams.Resolution.Inner.Width,
+        request.Resolution.Inner.Width.toString()
+    );
+    params.append(
+        CalibrateParams.Resolution.Inner.Height,
+        request.Resolution.Inner.Height.toString()
+    );
 
-    params.append(CalibratedParams.OuterWidth, request.OuterResolution.Width.toString());
-    params.append(CalibratedParams.OuterHeight, request.OuterResolution.Height.toString());
-    params.append(CSRFToken, token);
+    params.append(
+        CalibrateParams.Resolution.Outer.Width,
+        request.Resolution.Outer.Width.toString()
+    );
+    params.append(
+        CalibrateParams.Resolution.Outer.Height,
+        request.Resolution.Outer.Height.toString()
+    );
+    params.append(CalibrateParams.Token, token);
 
     await fetch([URL.CalibrateDevicePrefix, request.Project.Id].join("/"), {
         headers: {
@@ -158,7 +189,7 @@ const NewSingleWinfittsResult = (): SingleWinfittsResult => {
 
 interface ExceptedWinfittsResult {
     Account: string;
-    Results: Array<SingleWinfittsResult>;
+    Results: SingleWinfittsResult[];
 }
 
 const NewClickEvent = (x: number, y: number, timestamp: number): ClickEvent => {
@@ -166,19 +197,13 @@ const NewClickEvent = (x: number, y: number, timestamp: number): ClickEvent => {
 };
 
 const TotalTrailCount = 32;
-const Link = "link";
 const Selector = {
     Pratices: {
         Start: ".start.dot",
         Target: ".target.dot",
-        Light: {
-            Start: ".start.dot.light",
-            Target: ".target.dot.light",
-        },
+        Light: { Start: ".start.dot.light", Target: ".target.dot.light" },
     },
-    Result: {
-        Table: "#formRemoveRowData > div.block-table > table > tbody",
-    },
+    Result: { Table: "#formRemoveRowData > div.block-table > table > tbody" },
     RawData: {
         Table: "#divData",
         Head: "div.data1 > span",
@@ -187,7 +212,7 @@ const Selector = {
         SimpleRow: "div.data2 > span",
         ClickResults: "div.data3",
     },
-};
+} as const;
 
 class WinfittsPratices {
     private account: string;
@@ -198,33 +223,33 @@ class WinfittsPratices {
         this.account = participant.Account;
     }
 
-    private width(w: number): number {
+    private width(w: number) {
         return Math.abs(w - 3) < Math.abs(w - 15) ? 3 : 15;
     }
 
-    private distance(d: number): number {
+    private distance(d: number) {
         return Math.abs(d - 30) < Math.abs(d - 150) ? 30 : 150;
     }
 
-    private difficulty(w: number, d: number): number {
+    private difficulty(w: number, d: number) {
         const width = this.width(w);
         const distance = this.distance(d);
         if (width === 3) return distance === 30 ? 3.5 : 5.7;
         return distance === 30 ? 1.6 : 3.5;
     }
 
-    private range(d: number) {
+    private range(d: number): Readonly<{ Max: number; Min: number }> {
         if (d == 1.6) return { Max: 500, Min: 350 };
         if (d == 3.5) return { Max: 750, Min: 500 };
         if (d == 5.7) return { Max: 1200, Min: 900 };
         return { Max: 300, Min: 100 };
     }
 
-    private hasFailed(d: number): boolean {
+    private hasFailed(d: number) {
         return Math.random() * 100 <= (WinfittsFailedRate * d) / (1.6 + 3.5 + 5.7);
     }
 
-    private async eachTrail(page: Page): Promise<SingleWinfittsResult> {
+    private async eachTrail(page: Page) {
         await page.waitForSelector(Selector.Pratices.Light.Start);
         const start = await page.locator(Selector.Pratices.Start);
         const target = await page.locator(Selector.Pratices.Target);
@@ -279,15 +304,15 @@ class WinfittsPratices {
     async start(page: Page) {
         await page.goto(this.url);
         await page.getByLabel(Label.Account).fill(this.account);
-        await page.getByRole(Button, { name: "Starts" }).click();
-        await page.getByRole(Link, { name: "Start" }).click();
-        await page.getByRole(Button, { name: "Start" }).click();
-        const output: Array<SingleWinfittsResult> = [];
+        await page.getByRole(Role.Button, { name: Role.Name.Starts }).click();
+        await page.getByRole(Role.Link, { name: Role.Name.Start }).click();
+        await page.getByRole(Role.Button, { name: Role.Name.Start }).click();
+        const output: SingleWinfittsResult[] = [];
         for (let i = 0; i < TotalTrailCount; i++) {
             output.push(await this.eachTrail(page));
         }
-        await page.getByRole(Button, { name: "Finish" }).click();
-        return { Account: this.account, Results: output };
+        await page.getByRole(Role.Button, { name: Role.Name.Finish }).click();
+        return { Account: this.account, Results: output } as const;
     }
 }
 
@@ -301,7 +326,7 @@ interface SingleActualWinfittsResult {
 
 interface ActualWinfittsResults {
     Account: string;
-    Results: Array<SingleActualWinfittsResult>;
+    Results: SingleActualWinfittsResult[];
 }
 
 class WinfittsResult {
@@ -311,7 +336,11 @@ class WinfittsResult {
         this.url = [URL.WinfittsResultPrefix, id].join("/");
     }
 
-    private toWinfittsResult(array: Array<Array<string>>, account: string, start: number) {
+    private toWinfittsResult(
+        array: Readonly<string[][]>,
+        account: string,
+        start: number
+    ): Readonly<ActualWinfittsResults> {
         const result: ActualWinfittsResults = { Account: account, Results: [] };
         for (let i = 0; i < 4; i++) {
             const Id = parseFloat(array[start + i][0]);
@@ -325,8 +354,8 @@ class WinfittsResult {
         return result;
     }
 
-    private toCanonical(array: Array<Array<string>>): Array<ActualWinfittsResults> {
-        const output: Array<ActualWinfittsResults> = [];
+    private toCanonical(array: string[][]): Readonly<ActualWinfittsResults[]> {
+        const output: ActualWinfittsResults[] = [];
         for (let i = 0; i < array.length; i += 4) {
             array[i].shift(); // remove index
             const account = array[i].shift() || "";
@@ -335,11 +364,11 @@ class WinfittsResult {
         return output;
     }
 
-    private async parse(page: Page): Promise<Array<Array<string>>> {
-        const rows: Array<Array<string>> = [];
+    private async parse(page: Page) {
+        const rows: string[][] = [];
         const table = await page.locator(Selector.Result.Table);
         for (const row of await table.locator(Tag.Tr).all()) {
-            const array: Array<string> = [];
+            const array: string[] = [];
             for (const data of await row.locator(Tag.Td).all()) {
                 const text = (await data.textContent()) || "";
                 if (text.trim() === "") continue;
@@ -350,7 +379,7 @@ class WinfittsResult {
         return rows;
     }
 
-    async fetch(page: Page): Promise<Array<ActualWinfittsResults>> {
+    async fetch(page: Page) {
         await page.goto(this.url);
         const array = await this.parse(page);
         return this.toCanonical(array);
@@ -371,7 +400,7 @@ interface SimpleWinfittsRow {
 interface WinfittsRow extends SimpleWinfittsRow {
     Start: ClickEvent;
     Target: ClickEvent;
-    Else: Array<ClickEvent>;
+    Else: ClickEvent[];
 }
 
 interface SingleWinfitts {
@@ -380,14 +409,10 @@ interface SingleWinfitts {
     DeviceName: string;
     ErrorRate: string;
     EventTime: number;
-    Results: Array<WinfittsRow>;
+    Results: WinfittsRow[];
 }
 
-const EventType = {
-    Start: "start",
-    Target: "target",
-    Else: "else",
-};
+const EventType = { Start: "start", Target: "target", Else: "else" } as const;
 
 class WinfittsRawData {
     private url: string;
@@ -396,7 +421,7 @@ class WinfittsRawData {
     }
 
     private async head(locator: Locator) {
-        const array: Array<string> = [];
+        const array: string[] = [];
         for (const column of await locator.locator(Selector.RawData.Head).all()) {
             const text = (await column.textContent()) || "";
             array.push(text.trim());
@@ -407,11 +432,11 @@ class WinfittsRawData {
             DeviceName: array[3],
             ErrorRate: array[4],
             EventTime: parseInt(array[5]),
-        };
+        } as const;
     }
 
-    private async toSimpleWinfittsRow(locator: Locator): Promise<SimpleWinfittsRow> {
-        const array: Array<string> = [];
+    private async toSimpleWinfittsRow(locator: Locator) {
+        const array: string[] = [];
         for (const column of await locator.locator(Selector.RawData.SimpleRow).all()) {
             const text = (await column.textContent()) || "";
             array.push(text.trim());
@@ -425,30 +450,30 @@ class WinfittsRawData {
             Id: parseFloat(array[5]),
             Angle: parseInt(array[6]),
             EventTime: parseInt(array[7]),
-        };
+        } as const;
     }
 
-    private async trail(locator: Locator): Promise<Array<WinfittsRow>> {
-        const output: Array<WinfittsRow> = [];
+    private async trail(locator: Locator) {
+        const output: Readonly<WinfittsRow>[] = [];
         for (const each of await locator.locator(Selector.RawData.TrailPack).all()) {
-            const simple = await this.toSimpleWinfittsRow(each);
+            const row = await this.toSimpleWinfittsRow(each);
             const result: WinfittsRow = {
-                TrailNumber: simple.TrailNumber,
-                IsFailed: simple.IsFailed,
-                ErrorTime: simple.ErrorTime,
-                Width: simple.Width,
-                Distance: simple.Distance,
-                Id: simple.Id,
-                Angle: simple.Angle,
-                EventTime: simple.EventTime,
+                TrailNumber: row.TrailNumber,
+                IsFailed: row.IsFailed,
+                ErrorTime: row.ErrorTime,
+                Width: row.Width,
+                Distance: row.Distance,
+                Id: row.Id,
+                Angle: row.Angle,
+                EventTime: row.EventTime,
                 Start: NewClickEvent(0, 0, 0),
                 Target: NewClickEvent(0, 0, 0),
                 Else: [],
             };
 
-            if (isNaN(simple.TrailNumber)) continue;
+            if (isNaN(row.TrailNumber)) continue;
             for (const data of await each.locator(Selector.RawData.ClickResults).all()) {
-                const array: Array<string> = [];
+                const array: string[] = [];
                 for (const column of await data.locator(Tag.Span).all()) {
                     const text = (await column.textContent()) || "";
                     array.push(text.trim());
@@ -469,11 +494,11 @@ class WinfittsRawData {
         return output;
     }
 
-    async fetch(page: Page): Promise<Array<SingleWinfitts>> {
+    async fetch(page: Page): Promise<Readonly<SingleWinfitts[]>> {
         await page.goto(this.url);
         await page.waitForSelector(Selector.RawData.Table);
         const table = await page.locator(Selector.RawData.Table);
-        const output: Array<SingleWinfitts> = [];
+        const output: SingleWinfitts[] = [];
         for (const row of await table.locator(Selector.RawData.Row).all()) {
             const participant = await this.head(row);
             output.push({
@@ -493,9 +518,9 @@ export {
     CreateWinfittsProject,
     SetupCalibration,
     NewResolution,
+    TotalTrailCount,
     WinfittsPratices,
     ExceptedWinfittsResult,
-    TotalTrailCount,
     WinfittsResult,
     WinfittsRawData,
 };

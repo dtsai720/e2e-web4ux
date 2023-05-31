@@ -18,8 +18,10 @@ import {
     WinfittsRawData,
 } from "./winfitts";
 
-const prefixProjectName = "Winfitts";
-const postfixProjectName = "";
+const ProjectName = {
+    Prefix: "Winfitts",
+    Postfix: "",
+} as const;
 
 test.describe("Validate Winfitts", () => {
     test.beforeEach(async ({ page }) => {
@@ -33,7 +35,7 @@ test.describe("Validate Winfitts", () => {
         });
         const token = await Token(page);
         const cookie = await Cookies(context);
-        const projectName = NewProjectName(prefixProjectName, postfixProjectName);
+        const projectName = NewProjectName(ProjectName.Prefix, ProjectName.Postfix);
 
         await CreateWinfittsProject(token, cookie, {
             ProjectName: projectName,
@@ -44,7 +46,7 @@ test.describe("Validate Winfitts", () => {
         const project = await new GetProject(token, cookie, {
             ProjectName: projectName,
             CreatedBy: Email,
-        }).fetchOne();
+        }).fetch();
         expect(project.Id).not.toEqual("");
 
         const device = await DeviceDetails(page, project.Id);
@@ -54,27 +56,54 @@ test.describe("Validate Winfitts", () => {
             Project: project,
             Device: device,
             Calibrate: Calibrate,
-            DeviceResolution: NewResolution(Width, Height),
-            InnerResolution: NewResolution(Width, Height),
-            OuterResolution: NewResolution(Width, Height),
+            Resolution: {
+                Device: NewResolution(Width, Height),
+                Inner: NewResolution(Width, Height),
+                Outer: NewResolution(Width, Height),
+            },
         });
 
         const participants = await ParticipantDetail(page, project.Id, ParticipantCount);
         expect(participants.length).toEqual(ParticipantCount);
 
-        const partice: Array<ExceptedWinfittsResult> = [];
+        const pratices: Readonly<ExceptedWinfittsResult>[] = [];
         for (let i = 0; i < participants.length; i++) {
             const winfitts = await new WinfittsPratices(device, participants[i]).start(page);
-            partice.push(winfitts);
+            pratices.push(winfitts);
         }
         // TODO: compare partice and result
-        const result = await new WinfittsResult(project.Result).fetch(page);
+        const results = await new WinfittsResult(project.Result).fetch(page);
 
-        const rawdata = await new WinfittsRawData(project.Result).fetch(page);
-        // TODO: compare partice and rawdata
-        expect(rawdata.length).toEqual(ParticipantCount);
-        for (let i = 0; i < rawdata.length; i++) {
-            expect(rawdata[i].Results.length).toEqual(TotalTrailCount);
-        }
+        const array = await new WinfittsRawData(project.Result).fetch(page);
+        expect(array.length).toEqual(pratices.length);
+        pratices.forEach(pratice => {
+            let count = 0;
+            array.forEach(data => {
+                if (data.Account !== pratice.Account) return;
+                count++;
+                expect(pratice.Results.length).toEqual(data.Results.length);
+                let totalEventTime = 0;
+                let errorRate = 0;
+                for (let i = 0; i < pratice.Results.length; i++) {
+                    expect(pratice.Results[i].Distance).toEqual(data.Results[i].Distance);
+                    expect(pratice.Results[i].Width).toEqual(data.Results[i].Width);
+
+                    // expect(pratice.Results[i].Start.X).toEqual(data.Results[i].Start.X)
+                    // expect(pratice.Results[i].Start.Y).toEqual(data.Results[i].Start.Y)
+                    // expect(pratice.Results[i].Target.X).toEqual(data.Results[i].Target.X)
+                    // expect(pratice.Results[i].Target.Y).toEqual(data.Results[i].Target.Y)
+                    expect(pratice.Results[i].Else !== null).toEqual(data.Results[i].IsFailed);
+                    const eventTime =
+                        pratice.Results[i].Target.Timestamp - pratice.Results[i].Start.Timestamp;
+                    // expect(eventTime).toEqual(data.Results[i].EventTime);
+                    // console.log({ Source: eventTime, Result: data.Results[i].EventTime });
+                    totalEventTime += eventTime;
+                    errorRate += data.Results[i].IsFailed ? 1 : 0;
+                }
+                // expect(totalEventTime).toEqual(data.EventTime);
+                // expect(errorRate).toEqual(data.EventTime);
+            });
+            expect(count).toEqual(1);
+        });
     });
 });
