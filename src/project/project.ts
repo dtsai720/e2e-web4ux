@@ -1,5 +1,5 @@
-import { ProjectStatus } from "./config";
-import { URL, ContentType, Method } from "./http";
+import { Settings } from "../config";
+import { URL, ContentType, Method } from "../http/http";
 
 interface SimpleProject {
     Name: string;
@@ -15,19 +15,22 @@ interface GetProjectRequest {
 const StartTable = '<div class="name">';
 const ProjectDetail = '<div class="tool">';
 const ItemStart = "item draft";
+
 const Pattern = {
     ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^"]+)".+>.+/),
     Result: new RegExp(/<a href="\/Project\/.+Result\/([^"]+)".+>.+/),
     Lastline: new RegExp(/<div class="pagination-row">.*/),
 } as const;
+
 const Default = {
     Order: "ModifyByDesc",
     ListType: "Grid",
     PageNumber: "1",
     Prefix: "ALL",
     Postfix: "TEST",
-    Status: ProjectStatus,
+    Status: Settings.ProjectStatus,
 } as const;
+
 const QueryParams = {
     PageNumber: "PageNumber",
     ProjectName: "ProjectName",

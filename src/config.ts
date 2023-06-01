@@ -10,36 +10,25 @@ const Default = {
     WinfittsFailedRate: 10,
 } as const;
 
-const Email = process.env.Email || "";
-const Password = process.env.Password || "";
-const Host = process.env.Host || "";
-const ExperimentHost = process.env.ExperimentHost || "";
-const Width = parseInt(process.env.Width || Default.Width.toString());
-const Height = parseInt(process.env.Height || Default.Height.toString());
-const Calibrate = parseFloat(process.env.Calibrate || Default.Calibrate.toString());
-const ParticipantCount = parseInt(
-    process.env.ParticipantCount || Default.ParticipantCount.toString()
-);
-const ModelName = process.env.ModelName || Default.ModelName;
-const DeviceName = process.env.DeviceName || Default.DeviceName;
-const WinfittsFailedRate = parseInt(
-    process.env.WinfittsFailedRate || Default.WinfittsFailedRate.toString()
-);
-const EnableTimeSleep = process.env.EnableTimeSleep === "True";
-const ProjectStatus = "Draft";
+const Account = {
+    Email: process.env.Email || "",
+    Password: process.env.Password || "",
+} as const;
 
-export {
-    Host,
-    ExperimentHost,
-    Calibrate,
-    DeviceName,
-    EnableTimeSleep,
-    Email,
-    Height,
-    ModelName,
-    Password,
-    ParticipantCount,
-    ProjectStatus,
-    Width,
-    WinfittsFailedRate,
-};
+const Settings = {
+    Host: process.env.Host || "",
+    ExperimentHost: process.env.ExperimentHost || "",
+    Width: parseInt(process.env.Width || Default.Width.toString()),
+    Height: parseInt(process.env.Height || Default.Height.toString()),
+    Calibrate: parseFloat(process.env.Calibrate || Default.Calibrate.toString()),
+    ParticipantCount: parseInt(process.env.ParticipantCount || Default.ParticipantCount.toString()),
+    ModelName: process.env.ModelName || Default.ModelName,
+    DeviceName: process.env.DeviceName || Default.DeviceName,
+    WinfittsFailedRate: parseInt(
+        process.env.WinfittsFailedRate || Default.WinfittsFailedRate.toString()
+    ),
+    EnableTimeSleep: process.env.EnableTimeSleep === "True",
+    ProjectStatus: "Draft",
+} as const;
+
+export { Settings, Account };

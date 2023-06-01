@@ -1,20 +1,12 @@
 import { expect, test } from "@playwright/test";
 
 import { Login } from "../src/login";
-import { Token } from "../src/csrf";
-import { Cookies } from "./cookies";
-import { GetProject, NewProjectName } from "../src/project";
-import { DeviceDetails } from "../src/device";
-import { ParticipantDetail } from "../src/participant";
-import {
-    Width,
-    Height,
-    Calibrate,
-    Email,
-    ParticipantCount,
-    ModelName,
-    DeviceName,
-} from "../src/config";
+import { Token } from "../src/http/csrf";
+import { Cookies } from "../src/http/cookies";
+import { GetProject, NewProjectName } from "../src/project/project";
+import { DeviceDetails } from "../src/project/device";
+import { ParticipantDetail } from "../src/project/participant";
+import { Account, Settings } from "../src/config";
 import {
     CreateWinfittsProject,
     SetupCalibration,
@@ -37,8 +29,8 @@ test.describe("Validate Winfitts", () => {
 
     test.skip("Winfitts", async ({ page, context }) => {
         await page.setViewportSize({
-            width: Width,
-            height: Height,
+            width: Settings.Width,
+            height: Settings.Height,
         });
         const token = await Token(page);
         const cookie = await Cookies(context);
@@ -46,13 +38,13 @@ test.describe("Validate Winfitts", () => {
 
         await CreateWinfittsProject(token, cookie, {
             ProjectName: projectName,
-            ModelName: ModelName,
-            DeviceName: DeviceName,
-            ParticipantCount: ParticipantCount,
+            ModelName: Settings.ModelName,
+            DeviceName: Settings.DeviceName,
+            ParticipantCount: Settings.ParticipantCount,
         });
         const project = await new GetProject(token, cookie, {
             ProjectName: projectName,
-            CreatedBy: Email,
+            CreatedBy: Account.Email,
         }).fetch();
         expect(project.Id).not.toEqual("");
 
@@ -62,16 +54,16 @@ test.describe("Validate Winfitts", () => {
         await SetupCalibration(token, cookie, {
             Project: project,
             Device: device,
-            Calibrate: Calibrate,
+            Calibrate: Settings.Calibrate,
             Resolution: {
-                Device: NewResolution(Width, Height),
-                Inner: NewResolution(Width, Height),
-                Outer: NewResolution(Width, Height),
+                Device: NewResolution(Settings.Width, Settings.Height),
+                Inner: NewResolution(Settings.Width, Settings.Height),
+                Outer: NewResolution(Settings.Width, Settings.Height),
             },
         });
 
-        const participants = await ParticipantDetail(page, project.Id, ParticipantCount);
-        expect(participants.length).toEqual(ParticipantCount);
+        const participants = await ParticipantDetail(page, project.Id, Settings.ParticipantCount);
+        expect(participants.length).toEqual(Settings.ParticipantCount);
 
         const pratices: Readonly<ExceptedWinfittsResult>[] = [];
         for (let i = 0; i < participants.length; i++) {

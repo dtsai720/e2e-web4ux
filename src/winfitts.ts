@@ -1,10 +1,10 @@
 import { Locator, Page } from "@playwright/test";
 
-import { SimpleProject } from "./project";
-import { Device } from "./device";
-import { Participant } from "./participant";
-import { ContentType, Method, URL, Role, Label, CSRFToken, Tag } from "./http";
-import { Calibrate, EnableTimeSleep, ProjectStatus, WinfittsFailedRate } from "./config";
+import { SimpleProject } from "./project/project";
+import { Device } from "./project/device";
+import { Participant } from "./project/participant";
+import { ContentType, Method, URL, Role, Label, CSRFToken, Tag } from "./http/http";
+import { Settings } from "./config";
 import { EuclideanDistance } from "./math";
 
 interface CreateWinfittsRequest {
@@ -119,7 +119,7 @@ const SetupCalibration = async (token: string, cookie: string, request: Calibrat
     const params = new URLSearchParams();
     params.append(CalibrateParams.Project.Id, request.Project.Id);
     params.append(CalibrateParams.Project.Name, request.Project.Name);
-    params.append(CalibrateParams.Project.Status, ProjectStatus);
+    params.append(CalibrateParams.Project.Status, Settings.ProjectStatus);
     params.append(CalibrateParams.Device.Id, request.Device.Id);
     params.append(CalibrateParams.ModelName, request.Device.ModelName);
     params.append(CalibrateParams.Device.Name, request.Device.DeviceName);
@@ -246,7 +246,7 @@ class WinfittsPratices {
     }
 
     private hasFailed(d: number) {
-        return Math.random() * 100 <= (WinfittsFailedRate * d) / (1.6 + 3.5 + 5.7);
+        return Math.random() * 100 <= (Settings.WinfittsFailedRate * d) / (1.6 + 3.5 + 5.7);
     }
 
     private async eachTrail(page: Page) {
@@ -256,7 +256,8 @@ class WinfittsPratices {
         const startBox = await start.boundingBox();
         const targetBox = await target.boundingBox();
 
-        if (EnableTimeSleep) await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
+        if (Settings.EnableTimeSleep)
+            await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
         await start.click();
         const result = NewSingleWinfittsResult();
         result.Start.Timestamp = Math.floor(Date.now());
@@ -272,8 +273,8 @@ class WinfittsPratices {
                     result.Target.X,
                     result.Start.Y,
                     result.Target.Y
-                ) / Calibrate;
-            const width = targetBox["width"] / Calibrate;
+                ) / Settings.Calibrate;
+            const width = targetBox["width"] / Settings.Calibrate;
 
             result.Width = this.width(width);
             result.Distance = this.distance(distance);
@@ -281,7 +282,7 @@ class WinfittsPratices {
             const difficulty = this.difficulty(width, distance);
             const range = this.range(difficulty);
             const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
-            if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
+            if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
 
             if (this.hasFailed(difficulty)) {
                 const x = (result.Start.X + result.Target.X) / 2;
@@ -291,7 +292,7 @@ class WinfittsPratices {
 
                 result.Else = NewClickEvent(x, y, Math.floor(Date.now()));
                 const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
-                if (EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
+                if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
             }
         }
         await page.waitForSelector(Selector.Pratices.Light.Target);

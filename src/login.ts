@@ -1,12 +1,12 @@
 import { Page } from "@playwright/test";
 
-import { Email, Password } from "./config";
-import { URL, Role, Label } from "./http";
+import { Account } from "./config";
+import { URL, Role, Label } from "./http/http";
 
 const Login = async (page: Page) => {
     await page.goto(URL.Login);
-    await page.getByLabel(Label.Email).fill(Email);
-    await page.getByLabel(Label.Password).fill(Password);
+    await page.getByLabel(Label.Email).fill(Account.Email);
+    await page.getByLabel(Label.Password).fill(Account.Password);
     await page.getByRole(Role.Button).click();
 };
 

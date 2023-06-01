@@ -1,21 +1,23 @@
 import { test, expect } from "@playwright/test";
 
-import { ParticipantCount, ModelName, DeviceName } from "../src/config";
-import { URL, Role } from "../src/http";
+import { Settings } from "../src/config";
+import { URL, Role } from "../src/http/http";
 import { Login } from "../src/login";
-import { NewProjectName } from "../src/project";
+import { NewProjectName } from "../src/project/project";
 
 const ExpandSettingPostfix = "div.title > span.icon-toggle.collapse";
 const DocumentPopUP = "div.main-content > div.modal.documentup-modal.show > div > div.modal-body";
 const prefix = "ALL";
+
 const Input = {
-    ParticipantCount: ParticipantCount.toString(),
-    ModelName: ModelName,
-    DeviceName: DeviceName,
+    ParticipantCount: Settings.ParticipantCount.toString(),
+    ModelName: Settings.ModelName,
+    DeviceName: Settings.DeviceName,
     TotalTimer: "1",
     CountdownTimer: "60",
     TextName: "What Is Yoga?",
 } as const;
+
 const Selector = {
     WaitFor: {
         Page1: "#divStep1",

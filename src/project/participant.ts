@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
 
-import { URL, Attribute, Tag } from "./http";
+import { URL, Attribute, Tag } from "../http/http";
 
 interface Participant {
     Id: string;

@@ -1,7 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 
-import { Email, Password } from "../src/config";
-import { URL, Role, Label } from "../src/http";
+import { Account } from "../src/config";
+import { URL, Role, Label } from "../src/http/http";
 
 const redirectURL = async (page: Page, email: string, password: string) => {
     await page.goto(URL.Login);
@@ -13,17 +13,17 @@ const redirectURL = async (page: Page, email: string, password: string) => {
 
 test.describe("Validate Login", () => {
     test("Happy Path", async ({ page }) => {
-        const currentURL = await redirectURL(page, Email, Password);
+        const currentURL = await redirectURL(page, Account.Email, Account.Password);
         expect(currentURL).toEqual(URL.Home);
     });
 
     test("Failure: Empty Email", async ({ page }) => {
-        const currentURL = await redirectURL(page, "", Password);
+        const currentURL = await redirectURL(page, "", Account.Password);
         expect(currentURL).toEqual(URL.Login);
     });
 
     test("Failure: Empty Password", async ({ page }) => {
-        const currentURL = await redirectURL(page, Email, "");
+        const currentURL = await redirectURL(page, Account.Email, "");
         expect(currentURL).toEqual(URL.Login);
     });
 });

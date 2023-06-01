@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
 
-import { URL, Attribute } from "./http";
+import { URL, Attribute } from "../http/http";
 
 interface Device {
     ModelName: string;
