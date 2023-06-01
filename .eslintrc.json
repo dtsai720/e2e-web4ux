@@ -5,8 +5,7 @@
     },
     "extends": [
         "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "prettier"
+        "plugin:@typescript-eslint/recommended"
     ],
     "overrides": [
     ],
@@ -16,11 +15,9 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint",
-        "prettier"
+        "@typescript-eslint"
     ],
     "rules": {
-        "no-console": 2,
-        "prettier/prettier": 2
+        "no-console": 2
     }
 }
