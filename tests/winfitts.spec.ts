@@ -74,6 +74,7 @@ test.describe("Validate Winfitts", () => {
         // TODO: compare partice and result
         const results = await new WinfittsResult(project.Result).fetch(page);
 
+        // TODO: wait for fix.
         const array = await new WinfittsRawData(project.Result).fetch(page);
         expect(array.length).toEqual(pratices.length);
         pratices.forEach(pratice => {
