@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-import { ParticipantCount, ModelName, DeviceName } from "./config";
-import { URL, Role } from "./http";
-import { Login } from "./login";
-import { NewProjectName } from "./project";
+import { ParticipantCount, ModelName, DeviceName } from "../src/config";
+import { URL, Role } from "../src/http";
+import { Login } from "../src/login";
+import { NewProjectName } from "../src/project";
 
 const ExpandSettingPostfix = "div.title > span.icon-toggle.collapse";
 const DocumentPopUP = "div.main-content > div.modal.documentup-modal.show > div > div.modal-body";

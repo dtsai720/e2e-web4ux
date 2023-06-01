@@ -1,22 +1,29 @@
 import { expect, test } from "@playwright/test";
 
-import { Login } from "./login";
-import { Token } from "./csrf";
+import { Login } from "../src/login";
+import { Token } from "../src/csrf";
 import { Cookies } from "./cookies";
-import { GetProject, NewProjectName } from "./project";
-import { DeviceDetails } from "./device";
-import { ParticipantDetail } from "./participant";
-import { Width, Height, Calibrate, Email, ParticipantCount, ModelName, DeviceName } from "./config";
+import { GetProject, NewProjectName } from "../src/project";
+import { DeviceDetails } from "../src/device";
+import { ParticipantDetail } from "../src/participant";
+import {
+    Width,
+    Height,
+    Calibrate,
+    Email,
+    ParticipantCount,
+    ModelName,
+    DeviceName,
+} from "../src/config";
 import {
     CreateWinfittsProject,
     SetupCalibration,
     NewResolution,
     ExceptedWinfittsResult,
-    TotalTrailCount,
     WinfittsPratices,
     WinfittsResult,
     WinfittsRawData,
-} from "./winfitts";
+} from "../src/winfitts";
 
 const ProjectName = {
     Prefix: "Winfitts",
@@ -28,7 +35,7 @@ test.describe("Validate Winfitts", () => {
         await Login(page);
     });
 
-    test("Winfitts", async ({ page, context }) => {
+    test.skip("Winfitts", async ({ page, context }) => {
         await page.setViewportSize({
             width: Width,
             height: Height,

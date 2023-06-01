@@ -1,7 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 
-import { Email, Password } from "./config";
-import { URL, Role, Label } from "./http";
+import { Email, Password } from "../src/config";
+import { URL, Role, Label } from "../src/http";
 
 const redirectURL = async (page: Page, email: string, password: string) => {
     await page.goto(URL.Login);

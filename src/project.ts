@@ -16,9 +16,9 @@ const StartTable = '<div class="name">';
 const ProjectDetail = '<div class="tool">';
 const ItemStart = "item draft";
 const Pattern = {
-    ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^\"]+)".+>.+/),
-    Result: new RegExp(/<a href="\/Project\/.+Result\/([^\"]+)\".+>.+/),
-    Lastline: new RegExp(/\<div class\=\"pagination\-row\"\>.*/),
+    ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^"]+)".+>.+/),
+    Result: new RegExp(/<a href="\/Project\/.+Result\/([^"]+)".+>.+/),
+    Lastline: new RegExp(/<div class="pagination-row">.*/),
 } as const;
 const Default = {
     Order: "ModifyByDesc",

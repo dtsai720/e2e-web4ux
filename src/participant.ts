@@ -9,10 +9,10 @@ interface Participant {
 
 const Selector = {
     Id: (num: number) => {
-        return `input[name=\"Participants[${num}].Id\"]`;
+        return `input[name="Participants[${num}].Id"]`;
     },
     Account: (num: number) => {
-        return `input[name=\"Participants[${num}].Account\"]`;
+        return `input[name="Participants[${num}].Account"]`;
     },
 } as const;
 
