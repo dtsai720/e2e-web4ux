@@ -1,17 +1,22 @@
 import { Settings } from "../config";
 
-const CSRFToken = "__RequestVerificationToken";
-const ContentType = { FROM: "application/x-www-form-urlencoded; charset=UTF-8" } as const;
-const Method = { POST: "POST", GET: "GET", PUT: "PUT", PATCH: "PATCH" } as const;
-const Attribute = { Value: "value" } as const;
-const Label = { Email: "Email", Password: "Password", Account: "Account" } as const;
-const Tag = { Table: "table", Tr: "tr", Td: "td", Span: "span" } as const;
+const Token = { CSRF: "__RequestVerificationToken" } as const;
+const Headers = {
+    ContentType: { FROM: "application/x-www-form-urlencoded; charset=UTF-8" },
+} as const;
 
-const Role = {
-    Button: "button",
-    ListItem: "listitem",
-    Link: "link",
-    Name: { Login: "Login", Starts: "Starts", Start: "Start", Finish: "Finish" },
+const Method = { POST: "POST", GET: "GET", PUT: "PUT", PATCH: "PATCH" } as const;
+
+const HTML = {
+    Attribute: { Value: "value" },
+    Label: { Email: "Email", Password: "Password", Account: "Account" },
+    Tag: { Table: "table", Tr: "tr", Td: "td", Span: "span" },
+    Role: {
+        Button: "button",
+        ListItem: "listitem",
+        Link: "link",
+        Name: { Login: "Login", Starts: "Starts", Start: "Start", Finish: "Finish" },
+    },
 } as const;
 
 const URL = {
@@ -27,4 +32,4 @@ const URL = {
     WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRowData`,
 } as const;
 
-export { ContentType, Method, Attribute, Tag, Label, URL, CSRFToken, Role };
+export { Headers, Method, URL, Token, HTML };

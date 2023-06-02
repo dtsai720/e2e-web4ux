@@ -2,8 +2,13 @@ const RadiasToDegree = (rad: number) => {
     return (rad * 180) / Math.PI;
 };
 
-const EuclideanDistance = (x1: number, x2: number, y1: number, y2: number) => {
-    return Math.pow(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2), 0.5);
+interface position {
+    X: number;
+    Y: number;
+}
+
+const EuclideanDistance = (a: position, b: position) => {
+    return Math.pow(Math.pow(a.X - b.X, 2) + Math.pow(a.Y - b.Y, 2), 0.5);
 };
 
 export { RadiasToDegree, EuclideanDistance };

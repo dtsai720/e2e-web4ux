@@ -1,13 +1,13 @@
 import { test, expect, Page } from "@playwright/test";
 
 import { Account } from "../src/config";
-import { URL, Role, Label } from "../src/http/http";
+import { URL, HTML } from "../src/http/constants";
 
 const redirectURL = async (page: Page, email: string, password: string) => {
     await page.goto(URL.Login);
-    await page.getByLabel(Label.Email).fill(email);
-    await page.getByLabel(Label.Password).fill(password);
-    await page.getByRole(Role.Button, { name: Role.Name.Login }).click();
+    await page.getByLabel(HTML.Label.Email).fill(email);
+    await page.getByLabel(HTML.Label.Password).fill(password);
+    await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Login }).click();
     return await page.url();
 };
 

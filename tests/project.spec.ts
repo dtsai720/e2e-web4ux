@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { Settings } from "../src/config";
-import { URL, Role } from "../src/http/http";
+import { URL, HTML } from "../src/http/constants";
 import { Login } from "../src/login";
 import { NewProjectName } from "../src/project/project";
 
@@ -103,7 +103,7 @@ test.describe("Validate Project", () => {
 
         await page.waitForSelector(Selector.Page2.Typing.Document.PopUp);
         await page.locator(Selector.Page2.Typing.Document.Select).click();
-        await page.getByRole(Role.ListItem).filter({ hasText: Input.TextName }).click();
+        await page.getByRole(HTML.Role.ListItem).filter({ hasText: Input.TextName }).click();
         await page.locator(Selector.Page2.Typing.Document.Choose).click();
         await page.locator(Selector.NextButton).click();
 

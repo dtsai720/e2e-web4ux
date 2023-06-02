@@ -1,44 +1,9 @@
-import { Settings } from "../config";
-import { URL, ContentType, Method } from "../http/http";
+import { Page } from "@playwright/test";
 
-interface SimpleProject {
-    Name: string;
-    Result: string;
-    Id: string;
-}
-
-interface GetProjectRequest {
-    ProjectName: string;
-    CreatedBy: string;
-}
-
-const StartTable = '<div class="name">';
-const ProjectDetail = '<div class="tool">';
-const ItemStart = "item draft";
-
-const Pattern = {
-    ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^"]+)".+>.+/),
-    Result: new RegExp(/<a href="\/Project\/.+Result\/([^"]+)".+>.+/),
-    Lastline: new RegExp(/<div class="pagination-row">.*/),
-} as const;
-
-const Default = {
-    Order: "ModifyByDesc",
-    ListType: "Grid",
-    PageNumber: "1",
-    Prefix: "ALL",
-    Postfix: "TEST",
-    Status: Settings.ProjectStatus,
-} as const;
-
-const QueryParams = {
-    PageNumber: "PageNumber",
-    ProjectName: "ProjectName",
-    Status: "Status",
-    OrderBy: "OrderBy",
-    CreateBy: "CreateBy",
-    ProjectListType: "ProjectListType",
-} as const;
+import { URL, Headers, Method, HTML } from "../http/constants";
+import { IProject, CreateProjectRequest, Device, Participant } from "./interface";
+import { CreateProjectParams, Default } from "./constants";
+import { FetchProject } from "./fetch";
 
 const NewProjectName = (prefix: string, postfix: string) => {
     const timestamp = Math.floor(Date.now());
@@ -47,84 +12,106 @@ const NewProjectName = (prefix: string, postfix: string) => {
     return [Default.Postfix, prefix, timestamp.toString(), postfix].join("-");
 };
 
-class GetProject {
-    private body: string;
-    private token: string;
-    private cookie: string;
-    private name: string;
+const Selector = {
+    Participant: {
+        Id: (num: number) => {
+            return `input[name="Participants[${num}].Id"]`;
+        },
+        Account: (num: number) => {
+            return `input[name="Participants[${num}].Account"]`;
+        },
+    },
+    Device: {
+        ModelName: "input.modelname",
+        DeviceName: "input.devicename",
+        Id: "input.id",
+        TableRow: "#table-drop > tr",
+    },
+} as const;
 
-    constructor(token: string, cookie: string, request: GetProjectRequest) {
-        const param = new URLSearchParams();
-        param.append(QueryParams.PageNumber, Default.PageNumber);
-        param.append(QueryParams.ProjectName, request.ProjectName);
-        param.append(QueryParams.Status, Default.Status);
-        param.append(QueryParams.OrderBy, Default.Order);
-        param.append(QueryParams.CreateBy, request.CreatedBy);
-        param.append(QueryParams.ProjectListType, Default.ListType);
-        this.body = param.toString();
+class Project implements IProject {
+    protected token: string;
+    protected cookie: string;
+
+    constructor(token: string, cookie: string) {
         this.token = token;
         this.cookie = cookie;
-        this.name = request.ProjectName;
     }
 
-    private toCanonical(array: string[]) {
-        const output: SimpleProject = { Name: "", Result: "", Id: "" };
-        while (array.length !== 0 && array[0] !== StartTable) array.shift();
-        array.shift();
-        output.Name = array.shift() || "";
-        while (array.length !== 0 && !array[0].startsWith(ProjectDetail)) array.shift();
-        if (array.length < 3) return output;
-        output.Id = array[1].replace(Pattern.ProjectId, "$1");
-        output.Result = array[2].replace(Pattern.Result, "$1");
-        return output;
+    protected createParams(r: CreateProjectRequest): URLSearchParams {
+        const params = new URLSearchParams();
+        params.append(CreateProjectParams.ProjectName, r.ProjectName);
+        params.append(CreateProjectParams.ParticipantCount, r.ParticipantCount.toString());
+        params.append(CreateProjectParams.Token, this.token);
+
+        params.append(CreateProjectParams.Device.ModelName, r.ModelName);
+        params.append(CreateProjectParams.Device.DeviceName, r.DeviceName);
+        params.append(CreateProjectParams.Device.Sort, "0");
+        params.append(CreateProjectParams.Task.Sort, "0");
+        return params;
     }
 
-    private mining(html: string) {
-        html = html.split(Pattern.Lastline)[0];
-        const array: string[] = [];
-        html.split("\n").forEach(body => {
-            if (body.trim() === "") return;
-            array.push(body.trim());
-        });
-        return array;
-    }
-
-    private parse(html: string) {
-        const array = this.mining(html);
-        const output: Readonly<SimpleProject>[] = [];
-        while (array.length !== 0) {
-            const sentence = array.shift() || "";
-            if (!sentence.includes(ItemStart)) {
-                continue;
-            }
-
-            const candidate: string[] = [];
-            while (array.length !== 0 && !array[0].includes(ItemStart)) {
-                candidate.push(array.shift() || "");
-            }
-
-            if (candidate.length !== 0) output.push(this.toCanonical(candidate));
-        }
-        return output;
-    }
-
-    async fetch() {
-        const html = await fetch(URL.ListProject, {
+    public async create(request: CreateProjectRequest) {
+        const params = this.createParams(request);
+        await fetch(URL.CreateProject, {
             headers: {
-                "content-type": ContentType.FROM,
-                requestverificationtoken: this.token,
+                "content-type": Headers.ContentType.FROM,
                 cookie: this.cookie,
             },
-            body: this.body,
+            body: params.toString(),
             method: Method.POST,
-        }).then(data => data.text());
+        });
+    }
 
-        const body = this.parse(html);
-        for (let i = 0; i < body.length; i++) {
-            if (body[i].Name === this.name) return body[i];
+    public async device(page: Page, projectId: string): Promise<Readonly<Device>> {
+        await page.goto([URL.FetchDevicePrefix, projectId].join("/"));
+        await page.waitForSelector(Selector.Device.TableRow);
+        const locator = page.locator(Selector.Device.TableRow);
+        return {
+            ModelName:
+                (await locator
+                    .locator(Selector.Device.ModelName)
+                    .getAttribute(HTML.Attribute.Value)) || "",
+            DeviceName:
+                (await locator
+                    .locator(Selector.Device.DeviceName)
+                    .getAttribute(HTML.Attribute.Value)) || "",
+            Id:
+                (await locator.locator(Selector.Device.Id).getAttribute(HTML.Attribute.Value)) ||
+                "",
+        };
+    }
+
+    public async participant(
+        page: Page,
+        projectId: string,
+        participantCount: number
+    ): Promise<ReadonlyArray<Participant>> {
+        await page.goto([URL.FetchParticipantPrefix, projectId].join("/"));
+        await page.waitForSelector(HTML.Tag.Table);
+        const output: Participant[] = [];
+        for (let i = 0; i < participantCount; i++) {
+            output.push({
+                Id:
+                    (await page
+                        .locator(Selector.Participant.Id(i))
+                        .getAttribute(HTML.Attribute.Value)) || "",
+                Account:
+                    (await page
+                        .locator(Selector.Participant.Account(i))
+                        .getAttribute(HTML.Attribute.Value)) || "",
+            });
         }
-        return { Name: "", Id: "", Result: "" };
+        return output;
+    }
+
+    async fetch(projectName: string, creator: string) {
+        const project = new FetchProject(this.token, this.cookie, {
+            ProjectName: projectName,
+            CreatedBy: creator,
+        });
+        return await project.fetch();
     }
 }
 
-export { SimpleProject, NewProjectName, GetProject };
+export { NewProjectName, Project };

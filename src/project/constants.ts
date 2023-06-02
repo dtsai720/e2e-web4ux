@@ -1,4 +1,5 @@
-import { CSRFToken } from "../http/http";
+import { Token } from "../http/constants";
+import { Settings } from "../config";
 
 const Tasks = {
     Winfitts: "Winfitts",
@@ -8,7 +9,7 @@ const Tasks = {
 const CreateProjectParams = {
     ProjectName: "ProjectName",
     ParticipantCount: "ParticipantCount",
-    Token: CSRFToken,
+    Token: Token.CSRF,
     Device: {
         ModelName: "Devices[0].ModelName",
         DeviceName: "Devices[0].DeviceName",
@@ -35,4 +36,13 @@ const CreateProjectParams = {
     },
 } as const;
 
-export { Tasks, CreateProjectParams };
+const Default = {
+    Order: "ModifyByDesc",
+    ListType: "Grid",
+    PageNumber: "1",
+    Prefix: "ALL",
+    Postfix: "TEST",
+    Status: Settings.ProjectStatus,
+} as const;
+
+export { Tasks, CreateProjectParams, Default };
