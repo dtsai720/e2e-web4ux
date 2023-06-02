@@ -1,12 +1,12 @@
 import { Page } from "@playwright/test";
 
-import { Attribute } from "./http";
+import { HTML } from "./constants";
 
 const csrfSelector = 'input[name="__RequestVerificationToken"]';
 
 const Token = async (page: Page) => {
     const token = await page.locator(csrfSelector);
-    return (await token.getAttribute(Attribute.Value)) || "";
+    return (await token.getAttribute(HTML.Attribute.Value)) || "";
 };
 
 export { Token };
