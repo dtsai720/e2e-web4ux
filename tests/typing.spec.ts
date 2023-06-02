@@ -1,5 +1,6 @@
 import { test } from "@playwright/test";
-import { Login } from "./login";
+
+import { Login } from "../src/login";
 
 test.describe("Validate Typing", () => {
     test.beforeEach(async ({ page }) => {

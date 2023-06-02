@@ -1,33 +1,17 @@
-import { ProjectStatus } from "./config";
-import { URL, ContentType, Method } from "./http";
-
-interface SimpleProject {
-    Name: string;
-    Result: string;
-    Id: string;
-}
-
-interface GetProjectRequest {
-    ProjectName: string;
-    CreatedBy: string;
-}
+import { URL, Headers, Method } from "../http/constants";
+import { SimpleProject } from "./interface";
+import { Default } from "./constants";
 
 const StartTable = '<div class="name">';
 const ProjectDetail = '<div class="tool">';
 const ItemStart = "item draft";
+
 const Pattern = {
-    ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^\"]+)".+>.+/),
-    Result: new RegExp(/<a href="\/Project\/.+Result\/([^\"]+)\".+>.+/),
-    Lastline: new RegExp(/\<div class\=\"pagination\-row\"\>.*/),
+    ProjectId: new RegExp(/<a href="\/Project\/Devices\/([^"]+)".+>.+/),
+    Result: new RegExp(/<a href="\/Project\/.+Result\/([^"]+)".+>.+/),
+    Lastline: new RegExp(/<div class="pagination-row">.*/),
 } as const;
-const Default = {
-    Order: "ModifyByDesc",
-    ListType: "Grid",
-    PageNumber: "1",
-    Prefix: "ALL",
-    Postfix: "TEST",
-    Status: ProjectStatus,
-} as const;
+
 const QueryParams = {
     PageNumber: "PageNumber",
     ProjectName: "ProjectName",
@@ -37,20 +21,20 @@ const QueryParams = {
     ProjectListType: "ProjectListType",
 } as const;
 
-const NewProjectName = (prefix: string, postfix: string) => {
-    const timestamp = Math.floor(Date.now());
-    if (prefix === "") prefix = Default.Prefix;
-    if (postfix === "") return [Default.Postfix, prefix, timestamp.toString()].join("-");
-    return [Default.Postfix, prefix, timestamp.toString(), postfix].join("-");
-};
-
-class GetProject {
+class FetchProject {
     private body: string;
     private token: string;
     private cookie: string;
     private name: string;
 
-    constructor(token: string, cookie: string, request: GetProjectRequest) {
+    constructor(
+        token: string,
+        cookie: string,
+        request: {
+            ProjectName: string;
+            CreatedBy: string;
+        }
+    ) {
         const param = new URLSearchParams();
         param.append(QueryParams.PageNumber, Default.PageNumber);
         param.append(QueryParams.ProjectName, request.ProjectName);
@@ -65,14 +49,14 @@ class GetProject {
     }
 
     private toCanonical(array: string[]) {
-        const output: SimpleProject = { Name: "", Result: "", Id: "" };
+        const output: SimpleProject = { Name: "", ResultId: "", ProjectId: "" };
         while (array.length !== 0 && array[0] !== StartTable) array.shift();
         array.shift();
         output.Name = array.shift() || "";
         while (array.length !== 0 && !array[0].startsWith(ProjectDetail)) array.shift();
         if (array.length < 3) return output;
-        output.Id = array[1].replace(Pattern.ProjectId, "$1");
-        output.Result = array[2].replace(Pattern.Result, "$1");
+        output.ProjectId = array[1].replace(Pattern.ProjectId, "$1");
+        output.ResultId = array[2].replace(Pattern.Result, "$1");
         return output;
     }
 
@@ -108,7 +92,7 @@ class GetProject {
     async fetch() {
         const html = await fetch(URL.ListProject, {
             headers: {
-                "content-type": ContentType.FROM,
+                "content-type": Headers.ContentType.FROM,
                 requestverificationtoken: this.token,
                 cookie: this.cookie,
             },
@@ -120,8 +104,8 @@ class GetProject {
         for (let i = 0; i < body.length; i++) {
             if (body[i].Name === this.name) return body[i];
         }
-        return { Name: "", Id: "", Result: "" };
+        return { Name: "", ProjectId: "", ResultId: "" };
     }
 }
 
-export { SimpleProject, NewProjectName, GetProject };
+export { FetchProject };
