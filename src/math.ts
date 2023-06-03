@@ -2,16 +2,16 @@ const RadiasToDegree = (rad: number) => {
     return (rad * 180) / Math.PI;
 };
 
-interface position {
+interface Position {
     X: number;
     Y: number;
 }
 
-const EuclideanDistance = (a: position, b: position) => {
+const EuclideanDistance = (a: Position, b: Position) => {
     return Math.pow(Math.pow(a.X - b.X, 2) + Math.pow(a.Y - b.Y, 2), 0.5);
 };
 
-const TargetPosition = (start: position, radius: number, degree: number): position => {
+const TargetPosition = (start: Position, radius: number, degree: number): Position => {
     // x = x0 + rcos, y = y0 - rsin for this project ...
     return {
         X: start.X + radius * Math.cos((degree * Math.PI) / 180),
@@ -19,4 +19,4 @@ const TargetPosition = (start: position, radius: number, degree: number): positi
     };
 };
 
-export { RadiasToDegree, EuclideanDistance, TargetPosition };
+export { RadiasToDegree, EuclideanDistance, TargetPosition, Position };
