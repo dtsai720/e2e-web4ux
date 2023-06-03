@@ -8,6 +8,9 @@ const Default = {
     ModelName: "model name",
     DeviceName: "device name",
     WinfittsFailedRate: 10,
+    MouseMoveDelay: "15",
+    ProjectStatus: "Draft",
+    EnableTimeSleep: "True",
 } as const;
 
 const Account = {
@@ -27,9 +30,9 @@ const Settings = {
     WinfittsFailedRate: parseInt(
         process.env.WinfittsFailedRate || Default.WinfittsFailedRate.toString()
     ),
-    EnableTimeSleep: process.env.EnableTimeSleep === "True",
-    ProjectStatus: "Draft",
-    MouseMoveDelay: parseInt(process.env.MouseMoveDelay || "15"),
+    EnableTimeSleep: process.env.EnableTimeSleep === Default.EnableTimeSleep,
+    ProjectStatus: Default.ProjectStatus,
+    MouseMoveDelay: parseInt(process.env.MouseMoveDelay || Default.MouseMoveDelay),
 } as const;
 
 export { Settings, Account };
