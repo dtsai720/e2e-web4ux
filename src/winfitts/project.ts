@@ -56,7 +56,7 @@ class CreateProject extends Project {
 
     public async calibrate(request: CalibrationRequest) {
         const params = new URLSearchParams();
-        params.append(CalibrateParams.Project.Id, request.Project.Id);
+        params.append(CalibrateParams.Project.Id, request.Project.ProjectId);
         params.append(CalibrateParams.Project.Name, request.Project.Name);
         params.append(CalibrateParams.Project.Status, Settings.ProjectStatus);
         params.append(CalibrateParams.Device.Id, request.Device.Id);
@@ -92,7 +92,7 @@ class CreateProject extends Project {
         );
         params.append(CalibrateParams.Token, this.token);
 
-        await fetch([URL.CalibrateDevicePrefix, request.Project.Id].join("/"), {
+        await fetch([URL.CalibrateDevicePrefix, request.Project.ProjectId].join("/"), {
             headers: {
                 "content-type": Headers.ContentType.FROM,
                 cookie: this.cookie,
