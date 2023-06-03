@@ -2,6 +2,7 @@ import { Page, expect, test } from "@playwright/test";
 
 import { Account, Settings } from "../src/config";
 import { Login } from "../src/login";
+import { TargetPosition, EuclideanDistance } from "../src/math";
 import { Token } from "../src/http/csrf";
 import { Cookies } from "../src/http/cookies";
 import { NewProjectName } from "../src/project/project";
@@ -95,37 +96,94 @@ test.describe("Validate Winfitts", () => {
         const participants = await winfitts.participants(page);
         const pratices = await winfitts.pratice(page, participants);
 
-        const results = await new WinfittsResult(winfitts.ResultId()).fetch(page);
-
-        // TODO: wait for fix.
         const array = await new WinfittsRawData(winfitts.ResultId()).fetch(page);
-        // expect(array.length).toEqual(pratices.length);
+        expect(array.length).toEqual(pratices.length);
+
         pratices.forEach(pratice => {
             let count = 0;
+            let ErrorCount = 0;
+            let EventTime = 0;
+
             array.forEach(data => {
                 if (data.Account !== pratice.Account) return;
                 count++;
                 expect(pratice.Results.length).toEqual(data.Results.length);
-                let totalEventTime = 0;
-                let errorRate = 0;
+
                 for (let i = 0; i < pratice.Results.length; i++) {
                     expect(pratice.Results[i].Distance).toEqual(data.Results[i].Distance);
                     expect(pratice.Results[i].Width).toEqual(data.Results[i].Width);
 
-                    // expect(pratice.Results[i].Start.X).toEqual(data.Results[i].Start.X)
-                    // expect(pratice.Results[i].Start.Y).toEqual(data.Results[i].Start.Y)
-                    // expect(pratice.Results[i].Target.X).toEqual(data.Results[i].Target.X)
-                    // expect(pratice.Results[i].Target.Y).toEqual(data.Results[i].Target.Y)
+                    const target = TargetPosition(
+                        data.Results[i].Start,
+                        data.Results[i].Distance * Settings.Calibrate,
+                        data.Results[i].Angle
+                    );
+                    const difference = EuclideanDistance(target, data.Results[i].Target);
+                    const radius =
+                        EuclideanDistance(data.Results[i].Start, data.Results[i].Target) /
+                        Settings.Calibrate;
+
+                    console.log(difference, radius, target, data.Results[i]);
+                    expect(difference).toBeLessThan(
+                        (data.Results[i].Width * 2) / Settings.Calibrate
+                    );
+
+                    expect(Math.abs(radius - data.Results[i].Distance)).toBeLessThan(
+                        data.Results[i].Width / Settings.Calibrate
+                    );
+
                     expect(pratice.Results[i].Else !== null).toEqual(data.Results[i].IsFailed);
-                    const eventTime =
-                        pratice.Results[i].Target.Timestamp - pratice.Results[i].Start.Timestamp;
-                    // expect(eventTime).toEqual(data.Results[i].EventTime);
-                    // console.log({ Source: eventTime, Result: data.Results[i].EventTime });
-                    totalEventTime += eventTime;
-                    errorRate += data.Results[i].IsFailed ? 1 : 0;
+                    expect(pratice.Results[i].Else === null).toEqual(
+                        data.Results[i].ErrorTime === 0
+                    );
+                    ErrorCount += data.Results[i].ErrorTime;
+
+                    expect(data.Results[i].EventTime).toEqual(
+                        data.Results[i].Target.Timestamp - data.Results[i].Start.Timestamp
+                    );
+                    EventTime += data.Results[i].EventTime;
                 }
-                // expect(totalEventTime).toEqual(data.EventTime);
-                // expect(errorRate).toEqual(data.EventTime);
+
+                expect(count).toEqual(1);
+                expect(`${ErrorCount}/${pratice.Results.length}`).toEqual(data.ErrorRate);
+                expect(EventTime).toEqual(data.EventTime);
+                expect(request.DeviceName).toEqual(data.DeviceName);
+                expect(request.ModelName).toEqual(data.ModelName);
+            });
+        });
+
+        const results = await new WinfittsResult(winfitts.ResultId()).fetch(page);
+        array.forEach(data => {
+            let count = 0;
+            results.forEach(result => {
+                if (data.Account !== result.Account) return;
+                count++;
+                const source: {
+                    [key: string]: {
+                        Id: number;
+                        TotalCount: number;
+                        ErrorCount: number;
+                        TotalTime: number;
+                    };
+                } = {};
+                for (let i = 0; i < data.Results.length; i++) {
+                    const key = `${data.Results[i].Width}-${data.Results[i].Distance}`;
+                    source[key].Id = data.Results[i].Id;
+                    source[key].TotalCount++;
+                    source[key].ErrorCount += data.Results[i].IsFailed ? 1 : 0;
+                    source[key].TotalTime += data.Results[i].EventTime;
+                }
+
+                for (let i = 0; i < result.Results.length; i++) {
+                    const key = `${result.Results[i].Width}-${result.Results[i].Distance}`;
+                    expect(source[key].Id).toEqual(result.Results[i].Id);
+                    expect(source[key].ErrorCount / source[key].TotalCount).toEqual(
+                        result.Results[i].ErrorRate
+                    );
+                    expect(source[key].TotalTime / source[key].TotalCount).toEqual(
+                        result.Results[i].CursorMovementTime
+                    );
+                }
             });
             expect(count).toEqual(1);
         });

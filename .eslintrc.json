@@ -11,5 +11,5 @@
         "sourceType": "module"
     },
     "plugins": ["@typescript-eslint"],
-    "rules": { "no-console": 2 }
+    "rules": { "no-console": 1 }
 }
