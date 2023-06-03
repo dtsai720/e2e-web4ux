@@ -29,6 +29,7 @@ const Settings = {
     ),
     EnableTimeSleep: process.env.EnableTimeSleep === "True",
     ProjectStatus: "Draft",
+    MouseMoveDelay: parseInt(process.env.MouseMoveDelay || "15"),
 } as const;
 
 export { Settings, Account };

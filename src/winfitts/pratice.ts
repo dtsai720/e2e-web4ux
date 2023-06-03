@@ -4,7 +4,7 @@ import { Device, Participant } from "../project/interface";
 import { URL, HTML } from "../http/constants";
 import { Settings } from "../config";
 import { Selector } from "./constants";
-import { EuclideanDistance } from "../math";
+import { EuclideanDistance, Position } from "../math";
 import { Normalize } from "./tools";
 import { ClickEvent } from "./interface";
 
@@ -55,8 +55,21 @@ class WinfittsPratices {
         return Math.random() * 100 <= (Settings.WinfittsFailedRate * d) / (1.6 + 3.5 + 5.7);
     }
 
+    private async move(page: Page, from: Position, to: Position, steps: number) {
+        if (!Settings.EnableTimeSleep) return;
+        const stepX = (to.X - from.X) / steps;
+        const stepY = (to.Y - from.Y) / steps;
+        for (let i = 0; i < steps; i++) {
+            from.X += stepX;
+            from.Y += stepY;
+            await page.mouse.move(from.X, from.Y);
+        }
+    }
+
     private async eachTrail(page: Page) {
         await page.waitForSelector(Selector.Pratices.Light.Start);
+        if (Settings.EnableTimeSleep)
+            await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
         const start = await page.locator(Selector.Pratices.Start);
         const target = await page.locator(Selector.Pratices.Target);
         const startBox = await start.boundingBox();
@@ -71,8 +84,7 @@ class WinfittsPratices {
 
         const result = NewSingleWinfittsResult();
         result.Start = NewClickEvent(startBox.x, startBox.y, Math.floor(Date.now()));
-        result.Target.X = targetBox.x;
-        result.Target.Y = targetBox.y;
+        result.Target = NewClickEvent(targetBox.x, targetBox.y, 0);
 
         const distance = EuclideanDistance(result.Start, result.Target) / Settings.Calibrate;
         const width = targetBox.width / Settings.Calibrate;
@@ -83,21 +95,22 @@ class WinfittsPratices {
         const difficulty = Normalize.difficulty(width, distance);
         const range = this.range(difficulty);
         const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
-        if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
+        const current = { X: result.Start.X, Y: result.Start.Y };
 
         if (this.hasFailed(difficulty)) {
-            const x = (result.Start.X + result.Target.X) / 2;
-            const y = (result.Start.Y + result.Target.Y) / 2;
-            await page.mouse.move(x, y);
-            await page.mouse.click(x, y);
+            const X = (result.Start.X + result.Target.X) / 2;
+            const Y = (result.Start.Y + result.Target.Y) / 2;
+            await this.move(page, current, { X, Y }, sleepTime / Settings.MouseMoveDelay);
+            await page.mouse.click(X, Y);
 
-            result.Else = NewClickEvent(x, y, Math.floor(Date.now()));
-            const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
+            result.Else = NewClickEvent(X, Y, Math.floor(Date.now()));
             if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
         }
 
         await page.waitForSelector(Selector.Pratices.Light.Target);
-        await page.mouse.move(result.Target.X, result.Target.Y);
+        await this.move(page, current, result.Target, sleepTime / Settings.MouseMoveDelay);
+
+        if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
         await target.click();
         result.Target.Timestamp = Math.floor(Date.now());
         return result;
