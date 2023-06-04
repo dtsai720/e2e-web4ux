@@ -3,7 +3,7 @@ import { Page } from "@playwright/test";
 import { URL, HTML } from "../http/constants";
 import { Selector } from "./constants";
 
-interface SingleRow {
+interface ResultSingleRow {
     Id: number;
     Width: number;
     Distance: number;
@@ -13,7 +13,7 @@ interface SingleRow {
 
 interface Results {
     Account: string;
-    Results: SingleRow[];
+    Results: ResultSingleRow[];
 }
 
 class WinfittsResult {
@@ -73,4 +73,4 @@ class WinfittsResult {
     }
 }
 
-export { WinfittsResult };
+export { WinfittsResult, ResultSingleRow };

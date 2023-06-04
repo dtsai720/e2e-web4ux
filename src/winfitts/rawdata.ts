@@ -4,7 +4,7 @@ import { Selector } from "./constants";
 import { URL, HTML } from "../http/constants";
 import { ClickEvent } from "./interface";
 
-interface SingleRow {
+interface RawdataSingleRow {
     TrailNumber: number;
     IsFailed: boolean;
     ErrorTime: number;
@@ -24,7 +24,7 @@ interface Results {
     DeviceName: string;
     ErrorRate: string;
     EventTime: number;
-    Results: SingleRow[];
+    Results: RawdataSingleRow[];
 }
 
 const EventType = { Start: "start", Target: "target", Else: "else" } as const;
@@ -69,10 +69,10 @@ class WinfittsRawData {
     }
 
     private async trail(locator: Locator) {
-        const output: Readonly<SingleRow>[] = [];
+        const output: Readonly<RawdataSingleRow>[] = [];
         for (const each of await locator.locator(Selector.RawData.TrailPack).all()) {
             const row = await this.toSimpleWinfittsRow(each);
-            const result: SingleRow = {
+            const result: RawdataSingleRow = {
                 TrailNumber: row.TrailNumber,
                 IsFailed: row.IsFailed,
                 ErrorTime: row.ErrorTime,
@@ -129,4 +129,4 @@ class WinfittsRawData {
     }
 }
 
-export { WinfittsRawData };
+export { WinfittsRawData, RawdataSingleRow };

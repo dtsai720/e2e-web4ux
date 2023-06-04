@@ -132,4 +132,4 @@ class WinfittsPratices {
     }
 }
 
-export { WinfittsPratices, PraticeResult };
+export { WinfittsPratices, PraticeResult, SingleWinfittsResult };
