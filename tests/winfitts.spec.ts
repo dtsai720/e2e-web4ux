@@ -12,6 +12,7 @@ test("Winfitts", async ({ page, context }) => {
     });
     const requirements = await WinfittsComponents(page, context);
     expect(requirements.Rawdata.length).toEqual(requirements.Pratices.length);
+    expect(requirements.Rawdata.length).toEqual(requirements.Results.length);
 
     requirements.Pratices.forEach(pratice => {
         requirements.Rawdata.forEach(data => {

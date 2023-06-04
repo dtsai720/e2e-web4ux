@@ -2,14 +2,12 @@ import { BrowserContext, Page, expect } from "@playwright/test";
 
 import { TargetPosition, EuclideanDistance } from "../math";
 import { Account, Settings } from "../config";
-import { Token } from "../http/csrf";
-import { Cookies } from "../http/cookies";
-import { NewProjectName } from "../project/project";
 import { CreateProjectRequest, Device, Participant, SimpleProject } from "../project/interface";
 import { WinfittsPratices, PraticeResult, SingleWinfittsResult } from "../winfitts/pratice";
 import { RawdataSingleRow, WinfittsRawData } from "../winfitts/rawdata";
 import { CreateProject } from "../winfitts/project";
 import { ResultSingleRow, WinfittsResult } from "../winfitts/result";
+import { CreateProjectRequirements } from "./helper";
 
 const ProjectName = {
     Prefix: "Winfitts",
@@ -101,19 +99,10 @@ const convertToResultMapping = (
 };
 
 const WinfittsComponents = async (page: Page, context: BrowserContext) => {
-    const token = await Token(page);
-    const cookie = await Cookies(context);
-    const projectName = NewProjectName(ProjectName.Prefix, ProjectName.Postfix);
-    const request = {
-        ProjectName: projectName,
-        ModelName: Settings.ModelName,
-        DeviceName: Settings.DeviceName,
-        ParticipantCount: Settings.ParticipantCount,
-    } as const;
-
-    const project = new CreateProject(token, cookie);
+    const requirements = await CreateProjectRequirements(page, context, ProjectName);
+    const project = new CreateProject(requirements.Token, requirements.Cookie);
     const winfitts = new Winfitts(project);
-    await winfitts.setup(page, request);
+    await winfitts.setup(page, requirements.Request);
     const participants = await winfitts.participants(page);
     const Pratices = await winfitts.pratice(page, participants);
 

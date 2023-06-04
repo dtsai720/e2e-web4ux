@@ -1,9 +1,9 @@
 import { test } from "@playwright/test";
 
 import { Login } from "../src/login";
+import { DragAndDropComponents } from "../src/helper/dragAndDrop";
 
-test.describe("Validate Drag And Drop", () => {
-    test.beforeEach(async ({ page }) => {
-        await Login(page);
-    });
+test("Drag And Drop", async ({ page, context }) => {
+    await Login(page);
+    await DragAndDropComponents(page, context);
 });
