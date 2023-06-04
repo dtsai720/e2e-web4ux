@@ -1,7 +1,8 @@
 import { Page } from "@playwright/test";
 
-import { Device, Participant } from "../project/interface";
-import { URL, HTML } from "../http/constants";
+import { Participant } from "../project/interface";
+import { Pratice } from "../project/pratice";
+import { HTML } from "../http/constants";
 import { Settings } from "../config";
 import { Selector } from "./constants";
 import { EuclideanDistance, Position } from "../math";
@@ -37,13 +38,7 @@ const NewSingleWinfittsResult = (): SingleWinfittsResult => {
     };
 };
 
-class WinfittsPratices {
-    private url: string;
-
-    constructor(device: Device) {
-        this.url = [URL.StartWinfittsPrefix, device.Id].join("/");
-    }
-
+class WinfittsPratices extends Pratice {
     private range(d: number): Readonly<{ Max: number; Min: number }> {
         if (d == 1.6) return { Max: 500, Min: 350 };
         if (d == 3.5) return { Max: 750, Min: 500 };
@@ -117,11 +112,7 @@ class WinfittsPratices {
     }
 
     async start(page: Page, participant: Participant): Promise<Readonly<PraticeResult>> {
-        await page.goto(this.url);
-        await page.getByLabel(HTML.Label.Account).fill(participant.Account);
-        await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Starts }).click();
-        await page.getByRole(HTML.Role.Link, { name: HTML.Role.Name.Start }).click();
-        await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Start }).click();
+        await super.start(page, participant);
 
         const output: SingleWinfittsResult[] = [];
         for (let i = 0; i < TotalTrailCount; i++) {

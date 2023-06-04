@@ -1,28 +1,19 @@
 import { Page, BrowserContext } from "@playwright/test";
 
-import { Account } from "../config";
 import { CreateProject } from "../dragAndDrop/project";
-import { CreateProjectRequest, Device, SimpleProject } from "../project/interface";
+import { Participant } from "../project/interface";
 import { CreateProjectRequirements } from "./helper";
+import { Pratice } from "./pratice";
+import { IPratice } from "./interface";
 
 const ProjectName = {
     Prefix: "DragAndDrop",
     Postfix: "",
 } as const;
 
-class DragAndDrop {
-    private project: CreateProject;
-    private device: Device;
-    private detail: Readonly<SimpleProject>;
-
-    constructor(project: CreateProject) {
-        this.project = project;
-    }
-
-    async setup(page: Page, request: CreateProjectRequest) {
-        await this.project.create(request);
-        this.detail = await this.project.fetch(request.ProjectName, Account.Email);
-        this.device = await this.project.device(page, this.detail.ProjectId);
+class DragAndDrop extends Pratice implements IPratice {
+    async pratice(page: Page, participants: ReadonlyArray<Participant>): Promise<any> {
+        return;
     }
 }
 

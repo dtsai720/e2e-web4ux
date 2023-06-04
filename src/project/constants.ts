@@ -4,6 +4,7 @@ import { Settings } from "../config";
 const Tasks = {
     Winfitts: "Winfitts",
     DragAndDrop: "DragDrop",
+    Typing: "Typing",
 } as const;
 
 const CreateProjectParams = {
@@ -33,6 +34,12 @@ const CreateProjectParams = {
         Difficulty: (num: number) => {
             return `Tasks[0].WinfittsSettings[${num}].Difficulty`;
         },
+    },
+    Typing: {
+        TotalTimer: "Tasks[0].TypingTotalTimer",
+        CountdownTimer: "Tasks[0].TypingCountdownTimer",
+        FontSize: "Tasks[0].TypingFontSize",
+        TextId: "Tasks[0].TypingTextId",
     },
 } as const;
 

@@ -1,9 +1,14 @@
 import { test } from "@playwright/test";
 
+import { Settings } from "../src/config";
 import { Login } from "../src/login";
+import { TypingComponents } from "../src/helper/typing";
 
-test.describe("Validate Typing", () => {
-    test.beforeEach(async ({ page }) => {
-        await Login(page);
+test.skip("Typing", async ({ page, context }) => {
+    await Login(page);
+    await page.setViewportSize({
+        width: Settings.Width,
+        height: Settings.Height,
     });
+    await TypingComponents(page, context);
 });

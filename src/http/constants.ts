@@ -27,7 +27,7 @@ const URL = {
     FetchDevicePrefix: `${Settings.Host}/Project/Devices`,
     CalibrateDevicePrefix: `${Settings.Host}/Project/DeviceSetting`,
     FetchParticipantPrefix: `${Settings.Host}/Project/Participants`,
-    StartWinfittsPrefix: `${Settings.ExperimentHost}/Login`,
+    StartPraticePrefix: `${Settings.ExperimentHost}/Login`,
     WinfittsResultPrefix: `${Settings.Host}/Project/WinfittsResult`,
     WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRowData`,
 } as const;

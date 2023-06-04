@@ -31,4 +31,8 @@ interface IProject {
     fetch(projectName: string, creator: string);
 }
 
-export { IProject, CreateProjectRequest, SimpleProject, Device, Participant };
+interface IPratice {
+    start(page: Page, participant: Participant): any;
+}
+
+export { IProject, CreateProjectRequest, SimpleProject, Device, Participant, IPratice };

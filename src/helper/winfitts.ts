@@ -1,8 +1,10 @@
 import { BrowserContext, Page, expect } from "@playwright/test";
 
 import { TargetPosition, EuclideanDistance } from "../math";
-import { Account, Settings } from "../config";
-import { CreateProjectRequest, Device, Participant, SimpleProject } from "../project/interface";
+import { Settings } from "../config";
+import { Pratice } from "./pratice";
+import { IPratice } from "./interface";
+import { CreateProjectRequest, Participant } from "../project/interface";
 import { WinfittsPratices, PraticeResult, SingleWinfittsResult } from "../winfitts/pratice";
 import { RawdataSingleRow, WinfittsRawData } from "../winfitts/rawdata";
 import { CreateProject } from "../winfitts/project";
@@ -23,23 +25,16 @@ interface ResultMapping {
     };
 }
 
-class Winfitts {
-    private project: CreateProject;
-    private device: Device;
-    private detail: Readonly<SimpleProject>;
+class Winfitts extends Pratice implements IPratice {
+    protected project: CreateProject;
+
     constructor(project: CreateProject) {
+        super(project);
         this.project = project;
     }
 
-    ResultId(): string {
-        return this.detail.ResultId;
-    }
-
     async setup(page: Page, request: CreateProjectRequest) {
-        await this.project.create(request);
-
-        this.detail = await this.project.fetch(request.ProjectName, Account.Email);
-        this.device = await this.project.device(page, this.detail.ProjectId);
+        await super.setup(page, request);
         await this.project.calibrate({
             Project: this.detail,
             Device: this.device,
@@ -50,17 +45,6 @@ class Winfitts {
                 Outer: { Width: Settings.Width, Height: Settings.Height },
             },
         });
-    }
-
-    async participants(page: Page) {
-        const participants = await this.project.participant(
-            page,
-            this.detail.ProjectId,
-            Settings.ParticipantCount
-        );
-
-        expect(participants.length).toEqual(Settings.ParticipantCount);
-        return participants;
     }
 
     async pratice(
@@ -101,7 +85,7 @@ const convertToResultMapping = (
 const WinfittsComponents = async (page: Page, context: BrowserContext) => {
     const requirements = await CreateProjectRequirements(page, context, ProjectName);
     const project = new CreateProject(requirements.Token, requirements.Cookie);
-    const winfitts = new Winfitts(project);
+    const winfitts: IPratice = new Winfitts(project);
     await winfitts.setup(page, requirements.Request);
     const participants = await winfitts.participants(page);
     const Pratices = await winfitts.pratice(page, participants);
