@@ -15,7 +15,13 @@ const HTML = {
         Button: "button",
         ListItem: "listitem",
         Link: "link",
-        Name: { Login: "Login", Starts: "Starts", Start: "Start", Finish: "Finish" },
+        Name: {
+            Login: "Login",
+            Starts: "Starts",
+            Start: "Start",
+            Finish: "Finish",
+            Create: "Create to draft",
+        },
     },
 } as const;
 

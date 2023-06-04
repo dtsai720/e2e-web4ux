@@ -130,5 +130,7 @@ test.describe("Validate Project", () => {
         expect(Output.TotalTimer).toEqual(Input.TotalTimer);
         expect(Output.CountdownTimer).toEqual(Input.CountdownTimer);
         expect(Output.TextName).toContain(Input.TextName);
+
+        // await page.getByRole(HTML.Role.Button, { name: "Create to draft" }).click();
     });
 });
