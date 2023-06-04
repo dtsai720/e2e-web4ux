@@ -32,7 +32,7 @@ interface IProject {
 }
 
 interface IPratice {
-    start(page: Page, participant: Participant): any;
+    start(page: Page, participant: Participant);
 }
 
 export { IProject, CreateProjectRequest, SimpleProject, Device, Participant, IPratice };

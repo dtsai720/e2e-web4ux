@@ -13,7 +13,7 @@ const ProjectName = {
 } as const;
 
 class DragAndDrop extends Pratice implements IPratice {
-    async pratice(page: Page, participants: ReadonlyArray<Participant>): Promise<any> {
+    async pratice(page: Page, participants: ReadonlyArray<Participant>) {
         const pratices = new DragAndDorpPratices(this.device);
         for (let i = 0; i < participants.length; i++) {
             await pratices.start(page, participants[i]);

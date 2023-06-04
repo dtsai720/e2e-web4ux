@@ -6,7 +6,7 @@ interface IPratice {
     setup(page: Page, request: CreateProjectRequest);
     participants(page: Page);
     ResultId(): string;
-    pratice(page: Page, p: ReadonlyArray<Participant>): any;
+    pratice(page: Page, p: ReadonlyArray<Participant>);
 }
 
 export { IPratice };
