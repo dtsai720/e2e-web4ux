@@ -4,7 +4,7 @@ import { Settings } from "../src/config";
 import { Login } from "../src/login";
 import { DragAndDropComponents } from "../src/helper/dragAndDrop";
 
-test.skip("Drag And Drop", async ({ page, context }) => {
+test("Drag And Drop", async ({ page, context }) => {
     await Login(page);
     await page.setViewportSize({
         width: Settings.Width,

@@ -36,6 +36,8 @@ const URL = {
     StartPraticePrefix: `${Settings.ExperimentHost}/Login`,
     WinfittsResultPrefix: `${Settings.Host}/Project/WinfittsResult`,
     WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRowData`,
+    DragAndDropRawDataPrefix: `${Settings.Host}/Project/DragRowData`,
+    DragAndDropResultPrefix: `${Settings.Host}/Project/DragDropResult`,
 } as const;
 
 export { Headers, Method, URL, Token, HTML };

@@ -6,6 +6,8 @@ import { CreateProjectRequirements } from "./helper";
 import { Pratice } from "./pratice";
 import { IPratice } from "./interface";
 import { DragAndDorpPratices } from "../dragAndDrop/pratice";
+import { DragAndDropRawData } from "../dragAndDrop/rawdata";
+import { DragAndDropResult } from "../dragAndDrop/result";
 
 const ProjectName = {
     Prefix: "DragAndDrop",
@@ -28,7 +30,9 @@ const DragAndDropComponents = async (page: Page, context: BrowserContext) => {
     await dragAndDrop.setup(page, requirements.Request);
     const participants = await dragAndDrop.participants(page);
     const Pratices = await dragAndDrop.pratice(page, participants);
-    return { Pratices };
+    const Rawdata = await new DragAndDropRawData(dragAndDrop.ResultId()).fetch(page);
+    const Result = await new DragAndDropResult(dragAndDrop.ResultId()).fetch(page);
+    return { Pratices, Rawdata, Result };
 };
 
 export { DragAndDropComponents };
