@@ -63,49 +63,40 @@ class Project implements IProject {
         });
     }
 
-    public async device(page: Page, projectId: string): Promise<Readonly<Device>> {
+    public async device(page: Page, projectId: string) {
         await page.goto([URL.FetchDevicePrefix, projectId].join("/"));
         await page.waitForSelector(Selector.Device.TableRow);
         const locator = page.locator(Selector.Device.TableRow);
+        const elements = {
+            ModelName: locator.locator(Selector.Device.ModelName),
+            DeviceName: locator.locator(Selector.Device.DeviceName),
+            Id: await locator.locator(Selector.Device.Id),
+        } as const;
         return {
-            ModelName:
-                (await locator
-                    .locator(Selector.Device.ModelName)
-                    .getAttribute(HTML.Attribute.Value)) || "",
-            DeviceName:
-                (await locator
-                    .locator(Selector.Device.DeviceName)
-                    .getAttribute(HTML.Attribute.Value)) || "",
-            Id:
-                (await locator.locator(Selector.Device.Id).getAttribute(HTML.Attribute.Value)) ||
-                "",
-        };
+            ModelName: (await elements.ModelName.getAttribute(HTML.Attribute.Value)) || "",
+            DeviceName: (await elements.DeviceName.getAttribute(HTML.Attribute.Value)) || "",
+            Id: (await elements.Id.getAttribute(HTML.Attribute.Value)) || "",
+        } as const;
     }
 
-    public async participant(
-        page: Page,
-        projectId: string,
-        participantCount: number
-    ): Promise<ReadonlyArray<Participant>> {
+    public async participant(page: Page, projectId: string, participantCount: number) {
         await page.goto([URL.FetchParticipantPrefix, projectId].join("/"));
         await page.waitForSelector(HTML.Tag.Table);
         const output: Participant[] = [];
         for (let i = 0; i < participantCount; i++) {
+            const elements = {
+                Id: page.locator(Selector.Participant.Id(i)),
+                Account: page.locator(Selector.Participant.Account(i)),
+            } as const;
             output.push({
-                Id:
-                    (await page
-                        .locator(Selector.Participant.Id(i))
-                        .getAttribute(HTML.Attribute.Value)) || "",
-                Account:
-                    (await page
-                        .locator(Selector.Participant.Account(i))
-                        .getAttribute(HTML.Attribute.Value)) || "",
+                Id: (await elements.Id.getAttribute(HTML.Attribute.Value)) || "",
+                Account: (await elements.Account.getAttribute(HTML.Attribute.Value)) || "",
             });
         }
         return output;
     }
 
-    async fetch(projectName: string, creator: string) {
+    public async fetch(projectName: string, creator: string) {
         const project = new FetchProject(this.token, this.cookie, {
             ProjectName: projectName,
             CreatedBy: creator,

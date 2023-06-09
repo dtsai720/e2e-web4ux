@@ -5,10 +5,7 @@ import { CreateProject } from "../typing/project";
 import { CreateProjectRequest, Device, SimpleProject } from "../project/interface";
 import { CreateProjectRequirements } from "./helper";
 
-const ProjectName = {
-    Prefix: "Typing",
-    Postfix: "",
-} as const;
+const ProjectName = { Prefix: "Typing", Postfix: "" } as const;
 
 class Typing {
     private project: CreateProject;

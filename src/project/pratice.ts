@@ -1,9 +1,9 @@
 import { Page } from "@playwright/test";
 
-import { Device, IPratice, Participant } from "../project/interface";
+import { Device, Participant } from "../project/interface";
 import { URL, HTML } from "../http/constants";
 
-class Pratice implements IPratice {
+class Pratice {
     protected url: string;
 
     constructor(device: Device) {
@@ -16,6 +16,7 @@ class Pratice implements IPratice {
         await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Starts }).click();
         await page.getByRole(HTML.Role.Link, { name: HTML.Role.Name.Start }).click();
         await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Start }).click();
+        return { Account: "", Results: [{}] };
     }
 }
 

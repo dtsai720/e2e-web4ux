@@ -65,8 +65,8 @@ class WinfittsPratices extends Pratice {
         await page.waitForSelector(Selector.Pratices.Light.Start);
         if (Settings.EnableTimeSleep)
             await new Promise(f => setTimeout(f, Math.random() * 20 + 10));
-        const start = await page.locator(Selector.Pratices.Start);
-        const target = await page.locator(Selector.Pratices.Target);
+        const start = page.locator(Selector.Pratices.Start);
+        const target = page.locator(Selector.Pratices.Target);
         const startBox = await start.boundingBox();
         const targetBox = await target.boundingBox();
 
@@ -111,7 +111,7 @@ class WinfittsPratices extends Pratice {
         return result;
     }
 
-    async start(page: Page, participant: Participant): Promise<Readonly<PraticeResult>> {
+    async start(page: Page, participant: Participant) {
         await super.start(page, participant);
 
         const output: SingleWinfittsResult[] = [];

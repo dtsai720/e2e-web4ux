@@ -25,14 +25,19 @@ interface Participant {
 }
 
 interface IProject {
-    create(request: CreateProjectRequest);
-    device(page: Page, projectId: string);
-    participant(page: Page, projectId: string, participantCount: number);
-    fetch(projectName: string, creator: string);
+    create(request: CreateProjectRequest): Promise<void>;
+    device(page: Page, projectId: string): Promise<Readonly<Device>>;
+    participant(
+        page: Page,
+        projectId: string,
+        participantCount: number
+    ): Promise<ReadonlyArray<Participant>>;
+    fetch(projectName: string, creator: string): Promise<Readonly<SimpleProject>>;
 }
 
-interface IPratice {
-    start(page: Page, participant: Participant);
+interface PraticeResult {
+    Account: string;
+    Results: ReadonlyArray<Record<string, any>>;
 }
 
-export { IProject, CreateProjectRequest, SimpleProject, Device, Participant, IPratice };
+export { IProject, CreateProjectRequest, SimpleProject, Device, Participant, PraticeResult };

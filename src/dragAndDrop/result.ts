@@ -1,6 +1,6 @@
-import { Locator, Page } from "@playwright/test";
+import { Page } from "@playwright/test";
 
-import { URL, HTML } from "../http/constants";
+import { URL } from "../http/constants";
 
 class DragAndDropResult {
     private url: string;

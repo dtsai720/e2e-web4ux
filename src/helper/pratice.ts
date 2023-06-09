@@ -30,7 +30,7 @@ class Pratice {
         return participants;
     }
 
-    ResultId(): string {
+    ResultId() {
         return this.detail.ResultId;
     }
 }

@@ -5,14 +5,12 @@ import { Token } from "../http/csrf";
 import { Cookies } from "../http/cookies";
 import { NewProjectName } from "../project/project";
 
-const CreateProjectRequirements = async (
-    page: Page,
-    context: BrowserContext,
-    name: {
-        Prefix: string;
-        Postfix: string;
-    }
-) => {
+interface Name {
+    Prefix: string;
+    Postfix: string;
+}
+
+const CreateProjectRequirements = async (page: Page, context: BrowserContext, name: Name) => {
     const token = await Token(page);
     const cookie = await Cookies(context);
     const projectName = NewProjectName(name.Prefix, name.Postfix);

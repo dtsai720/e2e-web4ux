@@ -9,4 +9,22 @@ interface ClickEvent extends Position {
     Timestamp: number;
 }
 
-export { Resolution, ClickEvent };
+interface detail extends ClickEvent {
+    EventType: string;
+}
+
+interface RawDataDetail {
+    Title: {
+        TrailNumber: number;
+        IsFailed: boolean;
+        ErrorTime: number;
+        Width: number;
+        Distance: number;
+        Id: number;
+        Angle: number;
+        EventTime: number;
+    };
+    Detail: Array<detail>;
+}
+
+export { Resolution, ClickEvent, RawDataDetail };
