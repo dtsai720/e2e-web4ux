@@ -4,12 +4,12 @@ import { Settings } from "../src/config";
 import { Login } from "../src/login";
 import { WinfittsComponents, Validate } from "../src/helper/winfitts";
 
-test.skip("Winfitts", async ({ page, context }) => {
-    await Login(page);
+test("Winfitts", async ({ page, context }) => {
     await page.setViewportSize({
         width: Settings.Width,
         height: Settings.Height,
     });
+    await Login(page);
     const components = await WinfittsComponents(page, context);
     expect(components.Rawdata.length).toEqual(components.Pratices.length);
     expect(components.Rawdata.length).toEqual(components.Results.length);

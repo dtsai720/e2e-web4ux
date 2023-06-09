@@ -35,7 +35,7 @@ class WinfittsRawData {
         this.url = [URL.WinfittsRawDataPrefix, id].join("/");
     }
 
-    private async head(locator: Locator) {
+    private async title(locator: Locator) {
         const array: string[] = [];
         for (const column of await locator.locator(Selector.RawData.Head).all()) {
             const text = (await column.textContent()) || "";
@@ -46,7 +46,7 @@ class WinfittsRawData {
             ModelName: array[2],
             DeviceName: array[3],
             ErrorRate: array[4],
-            EventTime: parseInt(array[5]),
+            EventTime: Number(array[5]),
         } as const;
     }
 
@@ -57,18 +57,18 @@ class WinfittsRawData {
             array.push(text.trim());
         }
         return {
-            TrailNumber: parseInt(array[0]),
+            TrailNumber: Number(array[0]),
             IsFailed: array[1] === "Yes",
-            ErrorTime: parseInt(array[2]),
-            Width: parseInt(array[3]),
-            Distance: parseInt(array[4]),
-            Id: parseFloat(array[5]),
-            Angle: parseInt(array[6]),
-            EventTime: parseInt(array[7]),
+            ErrorTime: Number(array[2]),
+            Width: Number(array[3]),
+            Distance: Number(array[4]),
+            Id: Number(array[5]),
+            Angle: Number(array[6]),
+            EventTime: Number(array[7]),
         } as const;
     }
 
-    private async trail(locator: Locator) {
+    private async result(locator: Locator) {
         const output: Readonly<RawdataSingleRow>[] = [];
         for (const each of await locator.locator(Selector.RawData.TrailPack).all()) {
             const row = await this.toSimpleWinfittsRow(each);
@@ -96,9 +96,9 @@ class WinfittsRawData {
                 array[1] = array[1].slice(1, -1);
                 const position = array[1].split(",");
                 const event = {
-                    X: parseInt(position[0].trim()),
-                    Y: parseInt(position[1].trim()),
-                    Timestamp: parseInt(array[2]),
+                    X: Number(position[0].trim()),
+                    Y: Number(position[1].trim()),
+                    Timestamp: Number(array[2]),
                 };
                 if (array[0] === EventType.Start) result.Start = event;
                 else if (array[0] === EventType.Target) result.Target = event;
@@ -115,14 +115,14 @@ class WinfittsRawData {
         const table = await page.locator(Selector.RawData.Table);
         const output: Results[] = [];
         for (const row of await table.locator(Selector.RawData.Row).all()) {
-            const participant = await this.head(row);
+            const participant = await this.title(row);
             output.push({
                 Account: participant.Account,
                 DeviceName: participant.DeviceName,
                 ModelName: participant.ModelName,
                 ErrorRate: participant.ErrorRate,
                 EventTime: participant.EventTime,
-                Results: await this.trail(row),
+                Results: await this.result(row),
             });
         }
         return output;

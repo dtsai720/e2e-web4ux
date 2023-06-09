@@ -11,6 +11,7 @@ const Default = {
     MouseMoveDelay: "15",
     ProjectStatus: "Draft",
     EnableTimeSleep: "True",
+    DragAndDropDelay: "20",
     Typing: {
         TotalTimer: "1",
         CountdownTimer: "60",
@@ -41,6 +42,7 @@ const Settings = {
         TotalTimer: parseInt(process.env.TypingTotalTimer || Default.Typing.TotalTimer),
         CountdownTimer: parseInt(process.env.TypingCountdownTimer || Default.Typing.CountdownTimer),
     },
+    DragAndDropDelay: parseInt(process.env.DragAndDropDelay || Default.DragAndDropDelay),
 } as const;
 
 export { Settings, Account };

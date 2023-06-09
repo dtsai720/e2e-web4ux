@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { Page } from "@playwright/test";
 
 import { Participant } from "../project/interface";
 import { Pratice } from "../project/pratice";
@@ -18,10 +18,10 @@ class DragAndDorpPratices extends Pratice {
             const window = await page.locator(Selector.Window(idx));
             const windowBox = await window.boundingBox();
             const to = await target.boundingBox();
-
             for (let i = 0; i < array.length; i++) {
-                const locator = page.locator(Selector.File(idx, array[i] + 1)).first();
+                const locator = await page.locator(Selector.File(idx, array[i] + 1)).first();
                 const from = await locator.boundingBox();
+                const delay = Math.random() * 100 + 20;
                 if (from === null || to === null || windowBox === null) throw new Error("");
 
                 if (i === 0) {
@@ -43,12 +43,16 @@ class DragAndDorpPratices extends Pratice {
                     const x = idx === 1 ? -from.x + to.x + to.width + 1 : -from.x + to.x - 2;
                     await locator.dragTo(locator, { force: true, targetPosition: { x, y } });
                 }
-                if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, 20));
+                await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
+                if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, delay));
+
+                await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
                 await locator.dragTo(target);
-                if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, 20));
+                if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, delay));
             }
 
-            if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, 20));
+            await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
+            if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, delay));
         }
         await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Finish }).click();
     }

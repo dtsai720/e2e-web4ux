@@ -30,12 +30,12 @@ class WinfittsResult {
     ): Readonly<Results> {
         const result: Results = { Account: account, Results: [] };
         for (let i = 0; i < 4; i++) {
-            const Id = parseFloat(array[start + i][0]);
+            const Id = Number(array[start + i][0]);
             const wd = array[start + i][1].split("/");
-            const Width = parseInt(wd[0]);
-            const Distance = parseInt(wd[1]);
-            const CursorMovementTime = parseInt(array[start + i][2]);
-            const ErrorRate = parseFloat(array[start + i][3].replace(" %", "")) * 0.01;
+            const Width = Number(wd[0]);
+            const Distance = Number(wd[1]);
+            const CursorMovementTime = Number(array[start + i][2]);
+            const ErrorRate = Number(array[start + i][3].replace(" %", "")) * 0.01;
             result.Results.push({ Id, Width, Distance, CursorMovementTime, ErrorRate });
         }
         return result;

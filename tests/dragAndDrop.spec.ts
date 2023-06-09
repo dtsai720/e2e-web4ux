@@ -5,10 +5,10 @@ import { Login } from "../src/login";
 import { DragAndDropComponents } from "../src/helper/dragAndDrop";
 
 test("Drag And Drop", async ({ page, context }) => {
-    await Login(page);
     await page.setViewportSize({
         width: Settings.Width,
         height: Settings.Height,
     });
+    await Login(page);
     const components = await DragAndDropComponents(page, context);
 });

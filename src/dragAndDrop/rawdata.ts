@@ -49,7 +49,7 @@ class DragAndDropRawData {
             DeviceName: array[3],
             DragSide: array[4],
             NumberOfMove: array[5],
-            EventTime: parseInt(array[6]),
+            EventTime: Number(array[6]),
         } as const;
     }
 
@@ -67,13 +67,13 @@ class DragAndDropRawData {
                 Index: arr[0],
                 EventType: arr[1],
                 PositionType: arr[4],
-                EventTime: parseInt(arr[5]),
+                EventTime: Number(arr[5]),
             });
         }
         return array;
     }
 
-    private async simple(locator: Locator): Promise<Readonly<SimpleRow>> {
+    private async title(locator: Locator): Promise<Readonly<SimpleRow>> {
         const array: string[] = [];
         for (const column of await locator.locator(Selector.RawData.SimpleRow).all()) {
             const text = (await column.textContent()) || "";
@@ -82,27 +82,37 @@ class DragAndDropRawData {
         return {
             FileIndex: array[0],
             IsPassed: array[1] === "True",
-            EventTime: parseInt(array[3]),
+            EventTime: Number(array[3]),
         };
     }
 
-    async fetchOne(locator: Locator) {
+    private async result(locator: Locator) {
         const results: SimpleResult[] = [];
         for (const each of await locator.locator(Selector.RawData.TrailPack).all()) {
             const result: SimpleResult = {
                 Title: { FileIndex: "", IsPassed: false, EventTime: 0 },
                 Detail: [],
             };
-            try {
-                const simpleRow = await this.simple(each);
-                result.Title = simpleRow;
-            } catch (error) {
-                continue;
-            }
+            const title = await this.title(each);
+            if (isNaN(title.EventTime)) continue;
+            result.Title = title;
             result.Detail = await this.detail(each);
             results.push(result);
         }
         return results;
+    }
+
+    private async fetchOne(row: Locator): Promise<Readonly<Result>> {
+        const participant = await this.head(row);
+        return {
+            Account: participant.Account,
+            ModelName: participant.ModelName,
+            DeviceName: participant.DeviceName,
+            DragSide: participant.DragSide,
+            NumberOfMove: participant.NumberOfMove,
+            EventTime: participant.EventTime,
+            Result: await this.result(row),
+        };
     }
 
     async fetch(page: Page): Promise<ReadonlyArray<Result>> {
@@ -111,16 +121,7 @@ class DragAndDropRawData {
         const table = await page.locator(Selector.RawData.Table);
         const output: Result[] = [];
         for (const row of await table.locator(Selector.RawData.Row).all()) {
-            const participant = await this.head(row);
-            output.push({
-                Account: participant.Account,
-                ModelName: participant.ModelName,
-                DeviceName: participant.DeviceName,
-                DragSide: participant.DragSide,
-                NumberOfMove: participant.NumberOfMove,
-                EventTime: participant.EventTime,
-                Result: await this.fetchOne(row),
-            });
+            output.push(await this.fetchOne(row));
         }
         return output;
     }
