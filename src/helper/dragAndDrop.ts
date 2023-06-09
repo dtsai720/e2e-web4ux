@@ -34,7 +34,7 @@ const DragAndDropComponents = async (page: Page, context: BrowserContext) => {
     const participants = await dragAndDrop.participants(page);
     const Pratices = await dragAndDrop.pratice(page, participants);
     const Rawdata = await new DragAndDropRawData(dragAndDrop.ResultId()).fetchAll(page);
-    const Result = await new DragAndDropResult(dragAndDrop.ResultId()).fetch(page);
+    const Result = await new DragAndDropResult(dragAndDrop.ResultId(), 8).fetchAll(page);
     return { Pratices, Rawdata, Result } as const;
 };
 

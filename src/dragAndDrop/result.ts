@@ -1,16 +1,10 @@
-import { Page } from "@playwright/test";
-
 import { URL } from "../http/constants";
+import { IResults } from "../result/result";
 
-class DragAndDropResult {
-    private url: string;
-    constructor(id: string) {
+class DragAndDropResult extends IResults {
+    constructor(id: string, steps: number) {
+        super(id, steps);
         this.url = [URL.DragAndDropResultPrefix, id].join("/");
-    }
-
-    async fetch(page: Page) {
-        await page.goto(this.url);
-        return;
     }
 }
 

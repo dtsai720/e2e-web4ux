@@ -14,8 +14,10 @@ interface Results {
 class IResults {
     protected url: string;
     protected id: string;
-    constructor(id: string) {
+    protected steps: number;
+    constructor(id: string, steps: number) {
         this.id = id;
+        this.steps = steps;
     }
 
     protected toCanonicalResult(
@@ -27,7 +29,7 @@ class IResults {
 
     protected convertToResults(array: string[][]): ReadonlyArray<Results> {
         const output: Results[] = [];
-        for (let i = 0; i < array.length; i += 4) {
+        for (let i = 0; i < array.length; i += this.steps) {
             array[i].shift(); // remove index
             const account = array[i].shift() || "";
             output.push({

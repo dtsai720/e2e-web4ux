@@ -10,8 +10,8 @@ interface WinfittsResult {
 }
 
 class WinfittsResults extends IResults {
-    constructor(id: string) {
-        super(id);
+    constructor(id: string, steps: number) {
+        super(id, steps);
         this.url = [URL.WinfittsResultPrefix, id].join("/");
     }
 

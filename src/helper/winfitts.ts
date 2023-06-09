@@ -87,7 +87,7 @@ const WinfittsComponents = async (page: Page, context: BrowserContext) => {
     const Pratices = await winfitts.pratice(page, participants);
 
     const Rawdata = await new WinfittsRawData(winfitts.ResultId()).fetchAll(page);
-    const Results = await new WinfittsResults(winfitts.ResultId()).fetchAll(page);
+    const Results = await new WinfittsResults(winfitts.ResultId(), 4).fetchAll(page);
     return { Pratices, Rawdata, Results };
 };
 
