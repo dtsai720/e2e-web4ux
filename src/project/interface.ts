@@ -1,43 +1,36 @@
 import { Page } from "@playwright/test";
 
+interface Device {
+    ModelName: string;
+    DeviceName: string;
+    Id: string;
+}
 interface CreateProjectRequest {
     ProjectName: string;
     ModelName: string;
     DeviceName: string;
     ParticipantCount: number;
 }
-
-interface SimpleProject {
-    Name: string;
-    ResultId: string;
-    ProjectId: string;
-}
-
-interface Device {
-    ModelName: string;
-    DeviceName: string;
-    Id: string;
-}
-
 interface Participant {
     Id: string;
     Account: string;
 }
+interface FetchOne {
+    Name: string;
+    ProjectId: string;
+    ResultId: string;
+}
+interface Resolution {
+    Width: number;
+    Height: number;
+}
 
 interface IProject {
-    create(request: CreateProjectRequest): Promise<void>;
-    device(page: Page, projectId: string): Promise<Readonly<Device>>;
-    participant(
-        page: Page,
-        projectId: string,
-        participantCount: number
-    ): Promise<ReadonlyArray<Participant>>;
-    fetch(projectName: string, creator: string): Promise<Readonly<SimpleProject>>;
+    setup(p: Page, r: CreateProjectRequest): Promise<{ Device: Device; Detail: FetchOne }>;
+    create(r: CreateProjectRequest): Promise<void>;
+    device(p: Page, id: string): Promise<Device>;
+    participant(p: Page, id: string, count: number): Promise<Participant[]>;
+    fetchOne(name: string, creator: string): Promise<FetchOne>;
 }
 
-interface PraticeResult {
-    Account: string;
-    Results: ReadonlyArray<Record<string, any>>;
-}
-
-export { IProject, CreateProjectRequest, SimpleProject, Device, Participant, PraticeResult };
+export { IProject, CreateProjectRequest, Participant, FetchOne, Resolution, Device };
