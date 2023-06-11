@@ -11,6 +11,11 @@ const Default = {
     MouseMoveDelay: "15",
     ProjectStatus: "Draft",
     EnableTimeSleep: "True",
+    DragAndDropDelay: "20",
+    Typing: {
+        TotalTimer: "1",
+        CountdownTimer: "60",
+    },
 } as const;
 
 const Account = {
@@ -33,6 +38,11 @@ const Settings = {
     EnableTimeSleep: process.env.EnableTimeSleep === Default.EnableTimeSleep,
     ProjectStatus: Default.ProjectStatus,
     MouseMoveDelay: parseInt(process.env.MouseMoveDelay || Default.MouseMoveDelay),
+    Typing: {
+        TotalTimer: parseInt(process.env.TypingTotalTimer || Default.Typing.TotalTimer),
+        CountdownTimer: parseInt(process.env.TypingCountdownTimer || Default.Typing.CountdownTimer),
+    },
+    DragAndDropDelay: parseInt(process.env.DragAndDropDelay || Default.DragAndDropDelay),
 } as const;
 
 export { Settings, Account };

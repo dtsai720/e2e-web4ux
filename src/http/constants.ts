@@ -15,7 +15,13 @@ const HTML = {
         Button: "button",
         ListItem: "listitem",
         Link: "link",
-        Name: { Login: "Login", Starts: "Starts", Start: "Start", Finish: "Finish" },
+        Name: {
+            Login: "Login",
+            Starts: "Starts",
+            Start: "Start",
+            Finish: "Finish",
+            Create: "Create to draft",
+        },
     },
 } as const;
 
@@ -27,9 +33,11 @@ const URL = {
     FetchDevicePrefix: `${Settings.Host}/Project/Devices`,
     CalibrateDevicePrefix: `${Settings.Host}/Project/DeviceSetting`,
     FetchParticipantPrefix: `${Settings.Host}/Project/Participants`,
-    StartWinfittsPrefix: `${Settings.ExperimentHost}/Login`,
+    StartPraticePrefix: `${Settings.ExperimentHost}/Login`,
     WinfittsResultPrefix: `${Settings.Host}/Project/WinfittsResult`,
     WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRowData`,
+    DragAndDropRawDataPrefix: `${Settings.Host}/Project/DragRowData`,
+    DragAndDropResultPrefix: `${Settings.Host}/Project/DragDropResult`,
 } as const;
 
 export { Headers, Method, URL, Token, HTML };

@@ -1,207 +1,136 @@
-import { Page, expect, test } from "@playwright/test";
+import { BrowserContext, Page, expect, test } from "@playwright/test";
 
-import { Account, Settings } from "../src/config";
+import { Settings } from "../src/config";
 import { Login } from "../src/login";
-import { TargetPosition, EuclideanDistance } from "../src/math";
+import { WinfittsProject } from "../src/project/winfitts";
 import { Token } from "../src/http/csrf";
 import { Cookies } from "../src/http/cookies";
-import { NewProjectName } from "../src/project/project";
-import { CreateProjectRequest, Device, Participant, SimpleProject } from "../src/project/interface";
-import { WinfittsPratices, PraticeResult } from "../src/winfitts/pratice";
-import { CreateProject } from "../src/winfitts/project";
-import { WinfittsRawData } from "../src/winfitts/rawdata";
-import { WinfittsResult } from "../src/winfitts/result";
+import { NewProjectName } from "../src/project/prototype";
+import { TotalTrailCount, WinfittsPratices } from "../src/pratice/winfitts";
+import { WinfittsRawData } from "../src/rawdata/winfitts";
+import { WinfittsResult } from "../src/results/winfitts";
+import { WinfittsPraticeDetails } from "../src/pratice/interface";
+import { WinfittsFetchOne } from "../src/rawdata/interface";
+import { logger } from "../src/logger";
+import { WinfittsResultDetail } from "../src/results/interface";
 
-const ProjectName = {
-    Prefix: "Winfitts",
-    Postfix: "",
-} as const;
+const prepare = async (page: Page, context: BrowserContext) => {
+    const token = await Token(page);
+    const cookie = await Cookies(context);
+    const projectName = NewProjectName("Winfitts", "");
+    const request = {
+        ProjectName: projectName,
+        ModelName: Settings.ModelName,
+        DeviceName: Settings.DeviceName,
+        ParticipantCount: Settings.ParticipantCount,
+    } as const;
+    const project = new WinfittsProject(token, cookie);
+    const details = await project.setup(page, request);
+    const participants = await project.participant(
+        page,
+        details.Detail.ProjectId,
+        request.ParticipantCount
+    );
+    const device = await project.device(page, details.Detail.ProjectId);
+    const wp = new WinfittsPratices();
+    const Pratice = await wp.start(page, device.Id, participants);
+    const wrd = new WinfittsRawData();
+    const RawData = await wrd.fetchAll(page, details.Detail.ResultId);
+    const wr = new WinfittsResult();
+    const Results = await wr.fetchAll(page, details.Detail.ResultId);
+    return { Pratice, RawData, Results };
+};
 
-class Winfitts {
-    private project: CreateProject;
-    private device: Device;
-    private detail: Readonly<SimpleProject>;
-    constructor(project: CreateProject) {
-        this.project = project;
-    }
-
-    ResultId(): string {
-        return this.detail.ResultId;
-    }
-
-    async setup(page: Page, request: CreateProjectRequest) {
-        await this.project.create(request);
-
-        this.detail = await this.project.fetch(request.ProjectName, Account.Email);
-        this.device = await this.project.device(page, this.detail.ProjectId);
-        await this.project.calibrate({
-            Project: this.detail,
-            Device: this.device,
-            Calibrate: Settings.Calibrate,
-            Resolution: {
-                Device: { Width: Settings.Width, Height: Settings.Height },
-                Inner: { Width: Settings.Width, Height: Settings.Height },
-                Outer: { Width: Settings.Width, Height: Settings.Height },
-            },
-        });
-    }
-
-    async participants(page: Page) {
-        const participants = await this.project.participant(
-            page,
-            this.detail.ProjectId,
-            Settings.ParticipantCount
-        );
-
-        expect(participants.length).toEqual(Settings.ParticipantCount);
-        return participants;
-    }
-
-    async pratice(
-        page: Page,
-        participants: ReadonlyArray<Participant>
-    ): Promise<ReadonlyArray<PraticeResult>> {
-        const pratices: Readonly<PraticeResult>[] = [];
-        const winfitts = new WinfittsPratices(this.device);
-        for (let i = 0; i < participants.length; i++) {
-            pratices.push(await winfitts.start(page, participants[i]));
+const comparePraticeAndRawData = (pratice: WinfittsPraticeDetails, rawdata: WinfittsFetchOne) => {
+    let ErrorRate = 0;
+    let EventTime = 0;
+    for (let i = 0; i < pratice.Details.length; i++) {
+        logger(`Winfitts: Current Index is ${i + 1}`);
+        const source = pratice.Details[i];
+        const data = rawdata.Results[i];
+        const results = data.Detail;
+        let resultErrorCount = 0;
+        while (results.length > 0 && results[0].EventType !== "start") {
+            results.shift();
+            resultErrorCount++;
         }
-        return pratices;
+        const start = results.shift();
+        const target = results.pop();
+        resultErrorCount += results.length;
+        if (start === undefined || target === undefined) throw new Error("");
+
+        expect(source.Distance).toEqual(data.Title.Distance);
+        expect(source.Width).toEqual(data.Title.Width);
+        expect(source.Else.length).toEqual(data.Title.ErrorTime);
+        expect(resultErrorCount).toEqual(data.Title.ErrorTime);
+        expect(target.Timestamp - start.Timestamp).toEqual(data.Title.EventTime);
+        expect(source.IsFailed).toEqual(data.Title.IsFailed);
+
+        ErrorRate += data.Title.IsFailed ? 1 : 0;
+        EventTime += data.Title.EventTime;
     }
+    return { ErrorRate, EventTime };
+};
+
+interface mapping {
+    TotalEventTime: number;
+    ValidErrorCount: number;
 }
 
-test.describe("Validate Winfitts", () => {
-    test.beforeEach(async ({ page }) => {
-        await Login(page);
+const convertToResult = (rawdata: WinfittsFetchOne) => {
+    const output: Record<string, mapping> = {};
+    for (let i = 0; i < rawdata.Results.length; i++) {
+        const title = rawdata.Results[i].Title;
+        const key = `${title.Width}-${title.Distance}`;
+        if (output[key] === undefined) output[key] = { TotalEventTime: 0, ValidErrorCount: 0 };
+        output[key].TotalEventTime += title.EventTime;
+        output[key].ValidErrorCount += title.IsFailed ? 1 : 0;
+    }
+    return output;
+};
+
+const compareRawDataAndResult = (rawdata: WinfittsFetchOne, results: WinfittsResultDetail) => {
+    const data = convertToResult(rawdata);
+    expect(results.Details.length).toEqual(Object.keys(data).length);
+    const factor = TotalTrailCount / results.Details.length;
+    for (let i = 0; i < results.Details.length; i++) {
+        const result = results.Details[i];
+        logger(`Winfitts: Width: ${result.Width} And Distance: ${result.Distance}`);
+        const key = `${result.Width}-${result.Distance}`;
+        expect(data[key]).not.toEqual(undefined);
+        expect(result.CursorMovementTime * factor).toEqual(data[key].TotalEventTime);
+        expect(result.ErrorRate * factor).toEqual(data[key].ValidErrorCount);
+    }
+};
+
+test("Winfitts", async ({ page, context }) => {
+    await page.setViewportSize({
+        width: Settings.Width,
+        height: Settings.Height,
     });
+    await Login(page);
+    const { Pratice, RawData, Results } = await prepare(page, context);
 
-    test("Winfitts", async ({ page, context }) => {
-        await page.setViewportSize({
-            width: Settings.Width,
-            height: Settings.Height,
-        });
-        const token = await Token(page);
-        const cookie = await Cookies(context);
-        const projectName = NewProjectName(ProjectName.Prefix, ProjectName.Postfix);
-        const request = {
-            ProjectName: projectName,
-            ModelName: Settings.ModelName,
-            DeviceName: Settings.DeviceName,
-            ParticipantCount: Settings.ParticipantCount,
-        } as const;
+    expect(Object.keys(Pratice).length).toEqual(Object.keys(RawData).length);
+    for (const key in Pratice) {
+        logger(`Winfitts: Account: ${key}, Compare Pratice And RawData.`);
+        expect(RawData[key]).not.toEqual(undefined);
+        expect(RawData[key].Account).toEqual(key);
+        expect(RawData[key].ModelName).toEqual(Settings.ModelName);
+        expect(RawData[key].DeviceName).toEqual(Settings.DeviceName);
+        expect(Pratice[key].Account).toEqual(key);
+        expect(Pratice[key].Details.length).toEqual(RawData[key].Results.length);
+        const { ErrorRate, EventTime } = comparePraticeAndRawData(Pratice[key], RawData[key]);
+        expect(`${ErrorRate}/${TotalTrailCount}`).toEqual(RawData[key].ErrorRate);
+        expect(EventTime).toEqual(RawData[key].EventTime);
+    }
 
-        const project = new CreateProject(token, cookie);
-        const winfitts = new Winfitts(project);
-        await winfitts.setup(page, request);
-        const participants = await winfitts.participants(page);
-        const pratices = await winfitts.pratice(page, participants);
-
-        const array = await new WinfittsRawData(winfitts.ResultId()).fetch(page);
-        expect(array.length).toEqual(pratices.length);
-
-        pratices.forEach(pratice => {
-            let count = 0;
-            let ErrorCount = 0;
-            let EventTime = 0;
-
-            array.forEach(data => {
-                if (data.Account !== pratice.Account) return;
-                count++;
-                expect(pratice.Results.length).toEqual(data.Results.length);
-
-                for (let i = 0; i < pratice.Results.length; i++) {
-                    expect(pratice.Results[i].Distance).toEqual(data.Results[i].Distance);
-                    expect(pratice.Results[i].Width).toEqual(data.Results[i].Width);
-
-                    const target = TargetPosition(
-                        data.Results[i].Start,
-                        data.Results[i].Distance * Settings.Calibrate,
-                        data.Results[i].Angle
-                    );
-                    const difference = EuclideanDistance(target, data.Results[i].Target);
-                    const radius =
-                        EuclideanDistance(data.Results[i].Start, data.Results[i].Target) /
-                        Settings.Calibrate;
-
-                    console.log(difference, radius, target, data.Results[i]);
-                    // expect(difference).toBeLessThan(
-                    //     (data.Results[i].Width * 2) / Settings.Calibrate
-                    // );
-
-                    expect(Math.abs(radius - data.Results[i].Distance)).toBeLessThan(
-                        data.Results[i].Width / Settings.Calibrate
-                    );
-
-                    expect(pratice.Results[i].Else !== null).toEqual(data.Results[i].IsFailed);
-                    expect(pratice.Results[i].Else === null).toEqual(
-                        data.Results[i].ErrorTime === 0
-                    );
-                    ErrorCount += data.Results[i].ErrorTime;
-
-                    // expect(data.Results[i].EventTime).toEqual(
-                    //     data.Results[i].Target.Timestamp - data.Results[i].Start.Timestamp
-                    // );
-                    EventTime += data.Results[i].EventTime;
-                }
-
-                expect(count).toEqual(1);
-                expect(`${ErrorCount}/${pratice.Results.length}`).toEqual(data.ErrorRate);
-                // expect(EventTime).toEqual(data.EventTime);
-                expect(request.DeviceName).toEqual(data.DeviceName);
-                expect(request.ModelName).toEqual(data.ModelName);
-            });
-        });
-
-        const results = await new WinfittsResult(winfitts.ResultId()).fetch(page);
-        array.forEach(data => {
-            let count = 0;
-            results.forEach(result => {
-                if (data.Account !== result.Account) return;
-                count++;
-                const source: {
-                    [key: string]: {
-                        Id: number;
-                        TotalCount: number;
-                        ErrorCount: number;
-                        TotalTime: number;
-                    };
-                } = {};
-                for (let i = 0; i < data.Results.length; i++) {
-                    const key = `${data.Results[i].Width}-${data.Results[i].Distance}`;
-                    if (source[key] === undefined) {
-                        source[key] = {
-                            Id: data.Results[i].Id,
-                            TotalCount: 0,
-                            ErrorCount: 0,
-                            TotalTime: 0,
-                        };
-                    }
-                    expect(source[key].Id).toEqual(data.Results[i].Id);
-                    source[key].TotalCount++;
-                    source[key].ErrorCount += data.Results[i].IsFailed ? 1 : 0;
-                    source[key].TotalTime += data.Results[i].EventTime;
-                }
-
-                for (let i = 0; i < result.Results.length; i++) {
-                    const key = `${result.Results[i].Width}-${result.Results[i].Distance}`;
-                    console.log({
-                        Account: data.Account,
-                        Id: source[key].Id,
-                        TotalCount: source[key].TotalCount,
-                        ErrorCount: source[key].ErrorCount,
-                        TotalTime: source[key].TotalTime,
-                        CursorMovementTime: result.Results[i].CursorMovementTime,
-                    });
-                    expect(source[key].Id).toEqual(result.Results[i].Id);
-                    expect(source[key].ErrorCount / source[key].TotalCount).toEqual(
-                        result.Results[i].ErrorRate
-                    );
-                    // expect(source[key].TotalTime / source[key].TotalCount).toEqual(
-                    //     result.Results[i].CursorMovementTime
-                    // );
-                }
-            });
-            expect(count).toEqual(1);
-        });
-    });
+    expect(Object.keys(RawData).length).toEqual(Object.keys(Results).length);
+    for (const key in RawData) {
+        logger(`Winfitts: Account: ${key}, Compare RawData And Result.`);
+        expect(Results[key]).not.toEqual(undefined);
+        expect(Results[key].Account).toEqual(key);
+        expect(RawData[key].Account).toEqual(key);
+        compareRawDataAndResult(RawData[key], Results[key]);
+    }
 });

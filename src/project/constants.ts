@@ -1,9 +1,19 @@
-import { Token } from "../http/constants";
 import { Settings } from "../config";
+import { Token } from "../http/constants";
 
 const Tasks = {
     Winfitts: "Winfitts",
     DragAndDrop: "DragDrop",
+    Typing: "Typing",
+} as const;
+
+const Default = {
+    Order: "ModifyByDesc",
+    ListType: "Grid",
+    PageNumber: "1",
+    Prefix: "ALL",
+    Postfix: "TEST",
+    Status: Settings.ProjectStatus,
 } as const;
 
 const CreateProjectParams = {
@@ -20,29 +30,6 @@ const CreateProjectParams = {
         Sort: "Tasks[0].Sort",
         TrailsTestRound: "Tasks[0].TrailsTestRound",
     },
-    Winfitts: {
-        Width: (num: number) => {
-            return `Tasks[0].WinfittsSettings[${num}].Width`;
-        },
-        Distance: (num: number) => {
-            return `Tasks[0].WinfittsSettings[${num}].Distance`;
-        },
-        Sort: (num: number) => {
-            return `Tasks[0].WinfittsSettings[${num}].Sort`;
-        },
-        Difficulty: (num: number) => {
-            return `Tasks[0].WinfittsSettings[${num}].Difficulty`;
-        },
-    },
 } as const;
 
-const Default = {
-    Order: "ModifyByDesc",
-    ListType: "Grid",
-    PageNumber: "1",
-    Prefix: "ALL",
-    Postfix: "TEST",
-    Status: Settings.ProjectStatus,
-} as const;
-
-export { Tasks, CreateProjectParams, Default };
+export { Tasks, Default, CreateProjectParams };

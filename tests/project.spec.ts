@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 import { Settings } from "../src/config";
 import { URL, HTML } from "../src/http/constants";
 import { Login } from "../src/login";
-import { NewProjectName } from "../src/project/project";
+import { NewProjectName } from "../src/project/prototype";
 
 const ExpandSettingPostfix = "div.title > span.icon-toggle.collapse";
 const DocumentPopUP = "div.main-content > div.modal.documentup-modal.show > div > div.modal-body";
@@ -130,5 +130,7 @@ test.describe("Validate Project", () => {
         expect(Output.TotalTimer).toEqual(Input.TotalTimer);
         expect(Output.CountdownTimer).toEqual(Input.CountdownTimer);
         expect(Output.TextName).toContain(Input.TextName);
+
+        // await page.getByRole(HTML.Role.Button, { name: "Create to draft" }).click();
     });
 });
