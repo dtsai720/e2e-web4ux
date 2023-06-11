@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 import { Settings } from "../src/config";
 import { URL, HTML } from "../src/http/constants";
 import { Login } from "../src/login";
-import { NewProjectName } from "../src/project/project";
+import { NewProjectName } from "../src/project/prototype";
 
 const ExpandSettingPostfix = "div.title > span.icon-toggle.collapse";
 const DocumentPopUP = "div.main-content > div.modal.documentup-modal.show > div > div.modal-body";
