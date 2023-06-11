@@ -3,9 +3,14 @@ import { Locator, Page } from "@playwright/test";
 import { HTML } from "../http/constants";
 import { Settings } from "../config";
 import { Pratice } from "./prototype";
-import { DragAndDropDetails, DragAndDropEvent, DragAndDropResult, IPratice } from "./interface";
 import { DragSide, EventType } from "./constants";
 import { Participant } from "../project/interface";
+import {
+    DragAndDropPraticeDetails,
+    DragAndDropEvent,
+    IPratice,
+    DragAndDropPraticeResult,
+} from "./interface";
 
 interface Box {
     x: number;
@@ -29,7 +34,9 @@ const Selector = {
     },
 } as const;
 
-class DragAndDorpPratices extends Pratice implements IPratice {
+const TotalFileCount = 10;
+
+class DragAndDropPratices extends Pratice implements IPratice {
     private async delay() {
         if (!Settings.EnableTimeSleep) return;
         await new Promise(f => setTimeout(f, Math.random() * 100 + 20));
@@ -103,19 +110,22 @@ class DragAndDorpPratices extends Pratice implements IPratice {
     async startOne(page: Page, deviceId: string, account: string) {
         await super.prepare(page, deviceId, account);
         // after dragAndDrop x++, y++
-        const output: DragAndDropDetails = { Account: account, ArrowToRight: [], ArrowToLeft: [] };
+        const output: DragAndDropPraticeDetails = {
+            Account: account,
+            Details: [],
+        };
         for (let praticeIdx = 1; praticeIdx <= 2; praticeIdx++) {
             await page.waitForSelector(Selector.Target(praticeIdx));
             const target = page.locator(Selector.Target(praticeIdx));
             const window = page.locator(Selector.Window(praticeIdx));
-            const results: DragAndDropResult[] = [];
-            for (let fileIdx = 1; fileIdx <= 10; fileIdx++) {
+            const results: DragAndDropPraticeResult[] = [];
+            for (let fileIdx = 1; fileIdx <= TotalFileCount; fileIdx++) {
                 const Events = await this.moveToNext(page, praticeIdx, fileIdx, target, window);
                 const FileIndex = `file${fileIdx}`;
                 const IsPassed = Events.length === 1;
                 results.push({ Events, FileIndex, IsPassed });
             }
-            praticeIdx === 1 ? (output.ArrowToRight = results) : (output.ArrowToLeft = results);
+            output.Details.push(results);
             await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
             await this.delay();
         }
@@ -124,7 +134,7 @@ class DragAndDorpPratices extends Pratice implements IPratice {
     }
 
     async start(page: Page, deviceId: string, participants: Participant[]) {
-        const output: Record<string, DragAndDropDetails> = {};
+        const output: Record<string, DragAndDropPraticeDetails> = {};
         for (let i = 0; i < participants.length; i++) {
             const account = participants[i].Account;
             output[account] = await this.startOne(page, deviceId, account);
@@ -133,4 +143,4 @@ class DragAndDorpPratices extends Pratice implements IPratice {
     }
 }
 
-export { DragAndDorpPratices };
+export { DragAndDropPratices, TotalFileCount };

@@ -9,4 +9,5 @@ const DragSide = {
     Desktop: "desktop",
     Target: "target",
 } as const;
+
 export { EventType, DragSide };

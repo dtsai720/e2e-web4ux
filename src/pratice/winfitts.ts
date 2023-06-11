@@ -3,7 +3,7 @@ import { Page } from "@playwright/test";
 import { Settings } from "../config";
 import { Position, EuclideanDistance } from "../math";
 import { HTML } from "../http/constants";
-import { ClickEvent, IPratice, WinfittsDetails } from "./interface";
+import { ClickEvent, IPratice, WinfittsPraticeDetails } from "./interface";
 import { Pratice } from "./prototype";
 import { Participant } from "../project/interface";
 
@@ -70,12 +70,9 @@ class WinfittsPratices extends Pratice implements IPratice {
         const target = page.locator(Selector.Pratices.Target);
         const startBox = await start.boundingBox();
         const targetBox = await target.boundingBox();
-
-        await this.delay();
-        await start.click();
+        const Else: ClickEvent[] = [];
         if (startBox === null || targetBox === null) throw new Error("position cannot be null");
-
-        const Start = NewClickEvent(startBox.x, startBox.y, Math.floor(Date.now()));
+        const Start = NewClickEvent(startBox.x, startBox.y, 0);
         const Target = NewClickEvent(targetBox.x, targetBox.y, 0);
         const distance = EuclideanDistance(Start, Target) / Settings.Calibrate;
         const width = targetBox.width / Settings.Calibrate;
@@ -85,14 +82,39 @@ class WinfittsPratices extends Pratice implements IPratice {
         const range = this.range(difficulty);
         const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
         const current = { X: Start.X, Y: Start.Y };
-        let Else: null | ClickEvent = null;
+        let IsFailed = false;
+        if (Math.random() * 10 > 8) {
+            if (Math.random() * 10 > 7) {
+                await target.click();
+                Else.push(NewClickEvent(Target.X, Target.Y, Math.floor(Date.now())));
+            } else {
+                const X = (Start.X + Target.X) / 2;
+                const Y = (Start.Y + Target.Y) / 2;
+                await this.move(page, current, { X, Y }, sleepTime / Settings.MouseMoveDelay);
+                await page.mouse.click(X, Y);
+                Else.push(NewClickEvent(X, Y, Math.floor(Date.now())));
+            }
+            await this.delay();
+        }
+
+        if (Math.random() * 10 > 9) {
+            await start.dblclick();
+            Start.Timestamp = Math.floor(Date.now());
+            Else.push(NewClickEvent(Start.X, Start.Y, Math.floor(Date.now())));
+            IsFailed ||= true;
+        } else {
+            await start.click();
+            Start.Timestamp = Math.floor(Date.now());
+        }
+
         if (this.isFailed(difficulty)) {
             const X = (Start.X + Target.X) / 2;
             const Y = (Start.Y + Target.Y) / 2;
             await this.move(page, current, { X, Y }, sleepTime / Settings.MouseMoveDelay);
             await page.mouse.click(X, Y);
-            Else = NewClickEvent(X, Y, Math.floor(Date.now()));
+            Else.push(NewClickEvent(X, Y, Math.floor(Date.now())));
             if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
+            IsFailed ||= true;
         }
 
         await page.waitForSelector(Selector.Pratices.Light.Target);
@@ -100,11 +122,12 @@ class WinfittsPratices extends Pratice implements IPratice {
         if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
         await target.click();
         Target.Timestamp = Math.floor(Date.now());
-        return { Start, Target, Else, Width, Distance };
+        return { Start, Target, Else, Width, Distance, IsFailed };
     }
+
     async startOne(page: Page, deviceId: string, account: string) {
         await super.prepare(page, deviceId, account);
-        const results: WinfittsDetails = { Account: account, Details: [] };
+        const results: WinfittsPraticeDetails = { Account: account, Details: [] };
         for (let i = 0; i < TotalTrailCount; i++) {
             results.Details.push(await this.runOnce(page));
         }
@@ -113,7 +136,7 @@ class WinfittsPratices extends Pratice implements IPratice {
     }
 
     async start(page: Page, deviceId: string, participants: Participant[]) {
-        const output: Record<string, WinfittsDetails> = {};
+        const output: Record<string, WinfittsPraticeDetails> = {};
         for (let i = 0; i < participants.length; i++) {
             const account = participants[i].Account;
             output[account] = await this.startOne(page, deviceId, account);
@@ -122,4 +145,4 @@ class WinfittsPratices extends Pratice implements IPratice {
     }
 }
 
-export { WinfittsPratices };
+export { WinfittsPratices, TotalTrailCount };

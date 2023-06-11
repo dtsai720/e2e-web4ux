@@ -1,14 +1,23 @@
-interface WinfittsHead {
+import { Page } from "@playwright/test";
+
+import { ClickEvent } from "../pratice/interface";
+
+interface EventTime {
+    EventTime: number;
+}
+interface Head {
     Account: string;
     ModelName: string;
     DeviceName: string;
+}
+interface WinfittsHead extends Head, EventTime {
     ErrorRate: string;
-    EventTime: number;
 }
-interface DragAndDropHead {
-    Account: string;
+interface DragAndDropHead extends Head, EventTime {
+    DragSide: string;
+    NumberOfMove: string;
 }
-interface WinfittsTitle {
+interface WinfittsTitle extends EventTime {
     TrailNumber: number;
     IsFailed: boolean;
     ErrorTime: number;
@@ -16,38 +25,41 @@ interface WinfittsTitle {
     Distance: number;
     Id: number;
     Angle: number;
-    EventTime: number;
 }
-interface DragAndDropTitle {
-    TrailNumber: number;
+interface DragAndDropTitle extends EventTime {
+    FileIndex: string;
+    IsPassed: boolean;
 }
-interface WinfittsDetail {
+interface WinfittsDetail extends ClickEvent {
     EventType: string;
-    X: number;
-    Y: number;
-    Timestamp: number;
 }
 interface DragAndDropDetail {
+    Index: string;
     EventType: string;
+    DragSide: string;
+    EventTime: number;
 }
-interface WinfittsResult {
+interface WinfittsRawDataResult {
     Title: WinfittsTitle;
     Detail: WinfittsDetail[];
 }
-interface DragAndDropResult {
+interface DragAndDropRawDataResult {
     Title: DragAndDropTitle;
     Detail: DragAndDropDetail[];
 }
-interface WinfittsFetchOne {
-    Account: string;
-    DeviceName: string;
-    ModelName: string;
+interface WinfittsFetchOne extends Head, EventTime {
     ErrorRate: string;
-    EventTime: number;
-    Results: WinfittsResult[];
+    Results: WinfittsRawDataResult[];
 }
-interface DragAndDropFetchOne {
-    Account: string;
+interface DragAndDropFetchOne extends Head, EventTime {
+    DragSide: string;
+    NumberOfMove: string;
+    Result: DragAndDropRawDataResult[];
+}
+type fetchAll = WinfittsFetchOne | DragAndDropFetchOne[];
+
+interface IRawData {
+    fetchAll(page: Page, resultId: string): Promise<Record<string, fetchAll>>;
 }
 
 export {
@@ -57,8 +69,9 @@ export {
     DragAndDropTitle,
     WinfittsDetail,
     DragAndDropDetail,
-    WinfittsResult,
-    DragAndDropResult,
+    WinfittsRawDataResult,
+    DragAndDropRawDataResult,
     WinfittsFetchOne,
     DragAndDropFetchOne,
+    IRawData,
 };

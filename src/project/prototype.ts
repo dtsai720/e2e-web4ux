@@ -79,7 +79,6 @@ class Project {
         params.append(CreateProjectParams.ProjectName, r.ProjectName);
         params.append(CreateProjectParams.ParticipantCount, r.ParticipantCount.toString());
         params.append(CreateProjectParams.Token, this.token);
-
         params.append(CreateProjectParams.Device.ModelName, r.ModelName);
         params.append(CreateProjectParams.Device.DeviceName, r.DeviceName);
         params.append(CreateProjectParams.Device.Sort, "0");
@@ -122,10 +121,9 @@ class Project {
                 Id: page.locator(Selector.Participant.Id(i)),
                 Account: page.locator(Selector.Participant.Account(i)),
             } as const;
-            output.push({
-                Id: (await elements.Id.getAttribute(HTML.Attribute.Value)) || "",
-                Account: (await elements.Account.getAttribute(HTML.Attribute.Value)) || "",
-            });
+            const Id = (await elements.Id.getAttribute(HTML.Attribute.Value)) || "";
+            const Account = (await elements.Account.getAttribute(HTML.Attribute.Value)) || "";
+            output.push({ Id, Account });
         }
         return output;
     }

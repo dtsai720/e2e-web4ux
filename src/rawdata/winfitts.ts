@@ -2,18 +2,10 @@ import { Locator, Page } from "@playwright/test";
 
 import { URL } from "../http/constants";
 import { RawData } from "./prototype";
-import { WinfittsDetail, WinfittsFetchOne, WinfittsResult } from "./interface";
+import { IRawData, WinfittsDetail, WinfittsFetchOne, WinfittsRawDataResult } from "./interface";
+import { Selector } from "./constants";
 
-const Selector = {
-    Table: "#divData",
-    Head: "div.data1 > span",
-    Row: "div.data1-pack",
-    TrailPack: "div.data2-pack",
-    SimpleRow: "div.data2 > span",
-    ClickResults: "div.data3",
-} as const;
-
-class WinfittsRawData extends RawData {
+class WinfittsRawData extends RawData implements IRawData {
     protected toCanonicalHead(array: ReadonlyArray<string>) {
         return {
             Account: array[1],
@@ -49,7 +41,6 @@ class WinfittsRawData extends RawData {
     }
 
     protected async detail(locator: Locator) {
-        // TODO: from array to start, else, target
         const candidates = await this.prepareDetail(locator);
         const output: WinfittsDetail[] = [];
         for (let i = 0; i < candidates.length; i++) {
@@ -59,7 +50,7 @@ class WinfittsRawData extends RawData {
     }
 
     protected async result(locator: Locator) {
-        const results: WinfittsResult[] = [];
+        const results: WinfittsRawDataResult[] = [];
         for (const each of await locator.locator(Selector.TrailPack).all()) {
             const Title = await this.title(each);
             if (!("Width" in Title)) continue;

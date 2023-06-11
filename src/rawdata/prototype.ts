@@ -1,14 +1,15 @@
 import { Locator, Page } from "@playwright/test";
+
 import {
     DragAndDropDetail,
     DragAndDropFetchOne,
     DragAndDropHead,
-    DragAndDropResult,
+    DragAndDropRawDataResult,
     DragAndDropTitle,
     WinfittsDetail,
     WinfittsFetchOne,
     WinfittsHead,
-    WinfittsResult,
+    WinfittsRawDataResult,
     WinfittsTitle,
 } from "./interface";
 
@@ -25,9 +26,9 @@ type head = WinfittsHead | DragAndDropHead;
 type title = WinfittsTitle | DragAndDropTitle;
 type detail = WinfittsDetail | DragAndDropDetail;
 type details = WinfittsDetail[] | DragAndDropDetail[];
-type results = WinfittsResult[] | DragAndDropResult[];
+type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[];
 type fetchOne = WinfittsFetchOne | DragAndDropFetchOne;
-type fetchAll = Record<string, WinfittsFetchOne | DragAndDropFetchOne>;
+type fetchAll = Record<string, WinfittsFetchOne | DragAndDropFetchOne[]>;
 
 class RawData {
     protected async head(locator: Locator): Promise<head> {
@@ -87,7 +88,7 @@ class RawData {
         throw new Error("Not Implement");
     }
 
-    protected async fetchAll(page: Page, resultId: string): Promise<fetchAll> {
+    public async fetchAll(page: Page, resultId: string): Promise<fetchAll> {
         throw new Error("Not Implement");
     }
 }

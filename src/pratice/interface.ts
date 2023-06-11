@@ -6,13 +6,14 @@ interface ClickEvent {
     Y: number;
     Timestamp: number;
 }
-interface WinfittsDetails {
+interface WinfittsPraticeDetails {
     Account: string;
     Details: {
         Start: ClickEvent;
         Target: ClickEvent;
-        Else: ClickEvent | null;
+        Else: ClickEvent[];
         Width: number;
+        IsFailed: boolean;
         Distance: number;
     }[];
 }
@@ -20,34 +21,27 @@ interface DragAndDropEvent {
     EventType: string;
     DragSide: string;
 }
-interface DragAndDropResult {
+interface DragAndDropPraticeResult {
     FileIndex: string;
     IsPassed: boolean;
     Events: DragAndDropEvent[];
 }
-interface DragAndDropDetails {
+interface DragAndDropPraticeDetails {
     Account: string;
-    ArrowToRight: DragAndDropResult[];
-    ArrowToLeft: DragAndDropResult[];
+    Details: DragAndDropPraticeResult[][];
 }
+type startOne = WinfittsPraticeDetails | DragAndDropPraticeDetails;
+
 interface IPratice {
-    startOne(
-        p: Page,
-        deviceId: string,
-        account: string
-    ): Promise<WinfittsDetails | DragAndDropDetails>;
-    start(
-        p: Page,
-        deviceId: string,
-        participants: Participant[]
-    ): Promise<Record<string, WinfittsDetails | DragAndDropDetails>>;
+    startOne(p: Page, deviceId: string, account: string): Promise<startOne>;
+    start(p: Page, id: string, users: Participant[]): Promise<Record<string, startOne>>;
 }
 
 export {
     ClickEvent,
-    WinfittsDetails,
+    WinfittsPraticeDetails,
     IPratice,
     DragAndDropEvent,
-    DragAndDropDetails,
-    DragAndDropResult,
+    DragAndDropPraticeDetails,
+    DragAndDropPraticeResult,
 };

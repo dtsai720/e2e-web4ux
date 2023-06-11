@@ -71,6 +71,7 @@ class WinfittsProject extends Project implements IProject {
 
     private async calibrate(request: CalibrationRequest) {
         const params = new URLSearchParams();
+        params.append(CalibrateParams.Token, this.token);
         params.append(CalibrateParams.Project.Id, request.Project.ProjectId);
         params.append(CalibrateParams.Project.Name, request.Project.Name);
         params.append(CalibrateParams.Project.Status, Settings.ProjectStatus);
@@ -78,16 +79,15 @@ class WinfittsProject extends Project implements IProject {
         params.append(CalibrateParams.ModelName, request.Device.ModelName);
         params.append(CalibrateParams.Device.Name, request.Device.DeviceName);
         params.append(CalibrateParams.Calibrate, request.Calibrate.toString());
+        params.append(CalibrateParams.Resolution.Inner.Width, Resolution.Inner.Width.toString());
+        params.append(CalibrateParams.Resolution.Inner.Height, Resolution.Inner.Height.toString());
+        params.append(CalibrateParams.Resolution.Outer.Width, Resolution.Outer.Width.toString());
+        params.append(CalibrateParams.Resolution.Outer.Height, Resolution.Outer.Height.toString());
         params.append(CalibrateParams.Resolution.Device.Width, Resolution.Device.Width.toString());
         params.append(
             CalibrateParams.Resolution.Device.Height,
             Resolution.Device.Height.toString()
         );
-        params.append(CalibrateParams.Resolution.Inner.Width, Resolution.Inner.Width.toString());
-        params.append(CalibrateParams.Resolution.Inner.Height, Resolution.Inner.Height.toString());
-        params.append(CalibrateParams.Resolution.Outer.Width, Resolution.Outer.Width.toString());
-        params.append(CalibrateParams.Resolution.Outer.Height, Resolution.Outer.Height.toString());
-        params.append(CalibrateParams.Token, this.token);
         await fetch([URL.CalibrateDevicePrefix, request.Project.ProjectId].join("/"), {
             headers: { "content-type": Headers.ContentType.FROM, cookie: this.cookie },
             body: params.toString(),
