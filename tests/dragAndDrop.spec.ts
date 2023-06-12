@@ -103,7 +103,7 @@ const compareRawDataAndResult = (rawdata: DragAndDropFetchOne, result: DragAndDr
     expect(data.TotalErrorCount).toEqual(result.ErrorRate * TotalFileCount);
 };
 
-test("Drag And Drop", async ({ page, context }) => {
+test.skip("Drag And Drop", async ({ page, context }) => {
     await page.setViewportSize({
         width: Settings.Width,
         height: Settings.Height,

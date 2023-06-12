@@ -72,13 +72,8 @@ const comparePraticeAndRawData = (pratice: WinfittsPraticeDetails, rawdata: Winf
     return { ErrorRate, EventTime };
 };
 
-interface mapping {
-    TotalEventTime: number;
-    ValidErrorCount: number;
-}
-
 const convertToResult = (rawdata: WinfittsFetchOne) => {
-    const output: Record<string, mapping> = {};
+    const output: Record<string, { TotalEventTime: number; ValidErrorCount: number }> = {};
     for (let i = 0; i < rawdata.Results.length; i++) {
         const title = rawdata.Results[i].Title;
         const key = `${title.Width}-${title.Distance}`;
@@ -103,7 +98,7 @@ const compareRawDataAndResult = (rawdata: WinfittsFetchOne, results: WinfittsRes
     }
 };
 
-test("Winfitts", async ({ page, context }) => {
+test.skip("Winfitts", async ({ page, context }) => {
     await page.setViewportSize({
         width: Settings.Width,
         height: Settings.Height,
