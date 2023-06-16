@@ -13,6 +13,7 @@ import { DragAndDropPraticeResult } from "../src/pratice/interface";
 import { DragAndDropFetchOne } from "../src/rawdata/interface";
 import { DragAndDropResult } from "../src/results/dragAndDrop";
 import { detail } from "../src/results/interface";
+import { DragSide, EventType } from "../src/pratice/constants";
 
 const prepare = async (page: Page, context: BrowserContext) => {
     const token = await Token(page);
@@ -86,10 +87,10 @@ const convertToResult = (rawdata: DragAndDropFetchOne) => {
         if (data.Title.IsPassed) continue;
         output.TotalErrorCount++;
         const detail = data.Detail[data.Detail.length - 2];
-        if (detail.EventType === "Double click") output.DoubleClick++;
-        else if (detail.DragSide === "folder") output.InFolder++;
-        else if (detail.DragSide === "desktop") output.InDesktop++;
-        else if (detail.DragSide === "overshot") output.Overshot++;
+        if (detail.EventType === EventType.DobuleClick) output.DoubleClick++;
+        else if (detail.DragSide === DragSide.Folder) output.InFolder++;
+        else if (detail.DragSide === DragSide.Desktop) output.InDesktop++;
+        else if (detail.DragSide === DragSide.Overshot) output.Overshot++;
         else throw new Error("Invalid data format");
     }
     return output;
@@ -114,34 +115,44 @@ interface SimpleSummary {
     ErrorCount: number;
 }
 
-const normalizeRawData = (
-    rawdata: Record<string, Record<string, DragAndDropFetchOne[]>>
-): Record<string, SimpleSummary> => {
-    const output: Record<string, SimpleSummary> = {};
+const NewSimpleSummary = () => {
+    return {
+        InDesktop: 0,
+        InFolder: 0,
+        DoubleClick: 0,
+        Overshop: 0,
+        ErrorCount: 0,
+    };
+};
+
+function* generateRawData(rawdata: Record<string, Record<string, DragAndDropFetchOne[]>>) {
     for (const account in rawdata) {
         for (const device in rawdata[account]) {
             for (let i = 0; i < rawdata[account][device].length; i++) {
                 const fetchOne = rawdata[account][device][i];
                 const key = `${device}-${fetchOne.ArrowTo}`;
-                if (output[key] === undefined)
-                    output[key] = {
-                        InDesktop: 0,
-                        InFolder: 0,
-                        DoubleClick: 0,
-                        Overshop: 0,
-                        ErrorCount: 0,
-                    };
-                for (let j = 0; j < fetchOne.Result.length; j++) {
-                    const data = fetchOne.Result[j];
-                    if (data.Title.IsPassed) continue;
-                    output[key].ErrorCount++;
-                    const idx = data.Detail.length - 2;
-                    if (data.Detail[idx].EventType === "Double click") output[key].DoubleClick++;
-                    else if (data.Detail[idx].DragSide === "folder") output[key].InFolder++;
-                    else if (data.Detail[idx].DragSide === "overshot") output[key].Overshop++;
-                    else if (data.Detail[idx].DragSide === "desktop") output[key].InDesktop++;
-                }
+                yield { fetchOne, key };
             }
+        }
+    }
+}
+
+const normalizeRawData = (rawdata: Record<string, Record<string, DragAndDropFetchOne[]>>) => {
+    const output: Record<string, SimpleSummary> = {};
+    const candidates = generateRawData(rawdata);
+    for (let values = candidates.next(); !values.done; values = candidates.next()) {
+        const fetchOne = values.value.fetchOne;
+        const key = values.value.key;
+        if (output[key] === undefined) output[key] = NewSimpleSummary();
+        for (let j = 0; j < fetchOne.Result.length; j++) {
+            const data = fetchOne.Result[j];
+            if (data.Title.IsPassed) continue;
+            output[key].ErrorCount++;
+            const idx = data.Detail.length - 2;
+            if (data.Detail[idx].EventType === EventType.DobuleClick) output[key].DoubleClick++;
+            else if (data.Detail[idx].DragSide === DragSide.Folder) output[key].InFolder++;
+            else if (data.Detail[idx].DragSide === DragSide.Overshot) output[key].Overshop++;
+            else if (data.Detail[idx].DragSide === DragSide.Desktop) output[key].InDesktop++;
         }
     }
     return output;

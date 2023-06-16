@@ -21,6 +21,7 @@ const HTML = {
             Start: "Start",
             Finish: "Finish",
             Create: "Create to draft",
+            StartTyping: "Start Typing",
         },
     },
 } as const;

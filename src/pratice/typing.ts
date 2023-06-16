@@ -3,23 +3,34 @@ import { Page } from "@playwright/test";
 import { Pratice } from "./prototype";
 import { Device, Participant } from "../project/interface";
 import { TypingPraticeDetails } from "./interface";
+import { HTML } from "../http/constants";
+
+const Selector = {
+    Textarea: "#textarea",
+    TextBox: "body > div.tping-test > div.queBox > div",
+    Finish: "#btnFinish",
+} as const;
 
 class TypingPratice extends Pratice {
+    private isSpace(word: string) {
+        return /^\s*$/.test(word);
+    }
+
     async startOne(page: Page, deviceId: string, account: string) {
         await super.prepare(page, deviceId, account);
-        const locator = page.locator("#textarea");
+        const locator = page.locator(Selector.Textarea);
         const texts: string[] = [];
-        for (const li of await page.locator("body > div.tping-test > div.queBox > div").all()) {
+        for (const li of await page.locator(Selector.TextBox).all()) {
             texts.push((await li.innerText()) || "");
         }
         const context = texts.join("").split("\n");
         const start = Date.now();
-        await page.getByRole("button", { name: "Start Typing" }).click();
+        await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.StartTyping }).click();
         await locator.focus();
         for (let i = 0; i < context.length; i++) {
             const key = context[i];
             for (let j = 0; j < key.length; j++) {
-                if (/^\s*$/.test(key[j])) {
+                if (this.isSpace(key[j])) {
                     await page.keyboard.press("Space");
                 } else await locator.type(key[j], { delay: 5 });
             }
@@ -29,18 +40,12 @@ class TypingPratice extends Pratice {
             await new Promise(f => setTimeout(f, 1000));
             if (Date.now() - start > 50000) break;
         }
-        // await locator.press("Alt+A");
-        // await locator.press("Alt+C");
-        // await locator.press("Alt+V");
-        // await locator.press("Alt+V");
-        // await locator.press("Alt+V");
-        // await locator.press("Escape");
         await new Promise(f => setTimeout(f, 1000));
         await locator.press("Escape");
-        await page.waitForSelector("#btnFinish");
+        await page.waitForSelector(Selector.Finish);
         // expect(1).toEqual(0)
 
-        await page.getByRole("button", { name: "Finish" }).click();
+        await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Finish }).click();
     }
 
     async start(page: Page, devices: Device[], participants: Participant[]) {

@@ -104,28 +104,32 @@ interface SimpleSummary {
     ValidErrorCount: number;
 }
 
-const normalizeRawData = (
-    rawdata: Record<string, Record<string, WinfittsFetchOne>>
-): Record<string, SimpleSummary> => {
-    const output: Record<string, SimpleSummary> = {};
+function* generateRawData(rawdata: Record<string, Record<string, WinfittsFetchOne>>) {
     for (const account in rawdata) {
         for (const device in rawdata[account]) {
             const fetchOne = rawdata[account][device];
+            const prefix = `${fetchOne.ModelName}-${fetchOne.DeviceName}`;
             for (let i = 0; i < fetchOne.Results.length; i++) {
                 const title = fetchOne.Results[i].Title;
-                const key = [
-                    fetchOne.ModelName,
-                    fetchOne.DeviceName,
-                    title.Width.toString(),
-                    title.Distance.toString(),
-                ].join("-");
-                if (output[key] === undefined)
-                    output[key] = { CursorMovementTime: 0, ValidErrorCount: 0 };
-                output[key].CursorMovementTime += title.EventTime;
-                output[key].ValidErrorCount += title.IsFailed ? 1 : 0;
+                const postfix = `${title.Width}-${title.Distance}`;
+                const key = [prefix, postfix].join("-");
+                yield { title, key };
             }
         }
     }
+}
+
+const normalizeRawData = (rawdata: Record<string, Record<string, WinfittsFetchOne>>) => {
+    const output: Record<string, SimpleSummary> = {};
+    const candidates = generateRawData(rawdata);
+    for (let values = candidates.next(); !values.done; values = candidates.next()) {
+        const title = values.value.title;
+        const key = values.value.key;
+        if (output[key] === undefined) output[key] = { CursorMovementTime: 0, ValidErrorCount: 0 };
+        output[key].CursorMovementTime += title.EventTime;
+        output[key].ValidErrorCount += title.IsFailed ? 1 : 0;
+    }
+
     return output;
 };
 
