@@ -1,5 +1,5 @@
 import { Page } from "@playwright/test";
-import { Participant } from "../project/interface";
+import { Device, Participant } from "../project/interface";
 
 interface ClickEvent {
     X: number;
@@ -24,20 +24,28 @@ interface DragAndDropEvent {
 interface DragAndDropPraticeResult {
     FileIndex: string;
     IsPassed: boolean;
+    NumberOfMove: number;
     Events: DragAndDropEvent[];
 }
 interface DragAndDropPraticeDetails {
     Account: string;
     Details: DragAndDropPraticeResult[][];
 }
-type startOne = WinfittsPraticeDetails | DragAndDropPraticeDetails;
+interface TypingPraticeDetails {
+    Account: string;
+    Details: DragAndDropPraticeResult[][];
+}
+type startOne = WinfittsPraticeDetails | DragAndDropPraticeDetails | TypingPraticeDetails;
+type response = Promise<Record<string, Record<string, startOne>>>;
 
 interface IPratice {
     startOne(p: Page, deviceId: string, account: string): Promise<startOne>;
-    start(p: Page, id: string, users: Participant[]): Promise<Record<string, startOne>>;
+    start(p: Page, devices: Device[], users: Participant[]): response;
 }
 
 export {
+    startOne,
+    TypingPraticeDetails,
     ClickEvent,
     WinfittsPraticeDetails,
     IPratice,

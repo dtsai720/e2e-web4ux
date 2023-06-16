@@ -67,7 +67,7 @@ class DragAndDropRawData extends RawData implements IRawData {
             Account: participant.Account,
             ModelName: participant.ModelName,
             DeviceName: participant.DeviceName,
-            DragSide: participant.DragSide,
+            ArrowTo: participant.DragSide,
             NumberOfMove: participant.NumberOfMove,
             EventTime: participant.EventTime,
             Result: await this.result(row),
@@ -79,12 +79,14 @@ class DragAndDropRawData extends RawData implements IRawData {
         await page.goto(url);
         await page.waitForSelector(Selector.Table);
         const table = page.locator(Selector.Table);
-        const output: Record<string, DragAndDropFetchOne[]> = {};
+        const output: Record<string, Record<string, DragAndDropFetchOne[]>> = {};
         for (const row of await table.locator(Selector.Row).all()) {
             const detail = await this.fetchOne(row);
             const account = detail.Account;
-            if (output[account] === undefined) output[account] = [];
-            output[account].push(detail);
+            const key = `${detail.ModelName}-${detail.DeviceName}`;
+            if (output[account] === undefined) output[account] = {};
+            if (output[account][key] === undefined) output[account][key] = [];
+            output[account][key].push(detail);
         }
         return output;
     }

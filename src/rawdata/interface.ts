@@ -52,17 +52,17 @@ interface WinfittsFetchOne extends Head, EventTime {
     Results: WinfittsRawDataResult[];
 }
 interface DragAndDropFetchOne extends Head, EventTime {
-    DragSide: string;
+    ArrowTo: string;
     NumberOfMove: string;
     Result: DragAndDropRawDataResult[];
 }
-type fetchAll = WinfittsFetchOne | DragAndDropFetchOne[];
-
+type fetchAll = Record<string, Record<string, WinfittsFetchOne | DragAndDropFetchOne[]>>;
 interface IRawData {
-    fetchAll(page: Page, resultId: string): Promise<Record<string, fetchAll>>;
+    fetchAll(page: Page, resultId: string): Promise<fetchAll>;
 }
 
 export {
+    fetchAll,
     WinfittsHead,
     DragAndDropHead,
     WinfittsTitle,

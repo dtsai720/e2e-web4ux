@@ -1,45 +1,42 @@
-import { Page } from "@playwright/test";
-
 import { Result } from "./prototype";
 import { URL } from "../http/constants";
-import { DragAndDropResultDetail, DragAndDropResultRow, IResult } from "./interface";
+import { DragAndDropResultDetail, DragAndDropResultSummary, IResult } from "./interface";
 
 class DragAndDropResult extends Result implements IResult {
-    private steps = 2;
-
-    protected toCanonicalResult(array: ReadonlyArray<string[]>, start: number) {
-        const output: DragAndDropResultRow[] = [];
-        for (let i = 0; i < 2; i++) {
-            const ArrowTo = array[start + i][0];
-            const InFolder = Number(array[start + i][1]);
-            const InDesktop = Number(array[start + i][2]);
-            const Overshot = Number(array[start + i][3]);
-            const DoubleClick = Number(array[start + i][4]);
-            const ErrorRate = Number(array[start + i][5].replace(" %", "")) * 0.01;
-            output.push({ ArrowTo, InDesktop, InFolder, Overshot, DoubleClick, ErrorRate });
-        }
-        return output;
+    protected urlPrefix = URL.DragAndDropResultPrefix;
+    protected detailLength = 8;
+    protected toCanonicalResults(array: string[], Account: string): DragAndDropResultDetail {
+        return {
+            Account: Account,
+            ArrowTo: array[0].toLowerCase(),
+            InFolder: Number(array[1]),
+            InDesktop: Number(array[2]),
+            Overshot: Number(array[3]),
+            DoubleClick: Number(array[4]),
+            ErrorRate: Number(array[5].replace("%", "").trim()),
+        };
     }
 
-    protected convertToResults(array: string[][]): Record<string, DragAndDropResultDetail> {
-        const output: Record<string, DragAndDropResultDetail> = {};
-        for (let i = 0; i < array.length; i += this.steps) {
-            array[i].shift(); // remove index
-            const account = array[i].shift() || "";
-            output[account] = {
-                Account: account,
-                Details: this.toCanonicalResult(array, i),
-            };
-        }
-        return output;
+    protected toCanonicalSummaryDetail(candidate: string[]): DragAndDropResultSummary {
+        if (candidate.length !== this.detailLength) throw new Error("");
+        return {
+            ModelName: candidate[0],
+            DeviceName: candidate[1],
+            ArrowTo: candidate[2].toLocaleLowerCase(),
+            ErrorRate: Number(candidate[3].replace("%", "").trim()),
+            InFolder: Number(candidate[4]),
+            InDesktop: Number(candidate[5]),
+            Overshot: Number(candidate[6]),
+            DoubleClick: Number(candidate[7]),
+        };
     }
 
-    async fetchAll(page: Page, resultId: string): Promise<Record<string, DragAndDropResultDetail>> {
-        const url = [URL.DragAndDropResultPrefix, resultId].join("/");
-        await page.goto(url);
-        const array = await this.parseHTML(page);
-        const output = this.convertToResults(array);
-        return output;
+    protected toCanonicalSummaryKey(candidate: string[]): string {
+        if (candidate.length !== this.detailLength) throw new Error("");
+        const ModelName = candidate[0];
+        const DeviceName = candidate[1];
+        const ArrowTo = candidate[2].toLowerCase();
+        return [ModelName, DeviceName, ArrowTo].join("-");
     }
 }
 

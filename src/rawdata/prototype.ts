@@ -11,6 +11,7 @@ import {
     WinfittsHead,
     WinfittsRawDataResult,
     WinfittsTitle,
+    fetchAll,
 } from "./interface";
 
 const Selector = {
@@ -28,7 +29,6 @@ type detail = WinfittsDetail | DragAndDropDetail;
 type details = WinfittsDetail[] | DragAndDropDetail[];
 type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[];
 type fetchOne = WinfittsFetchOne | DragAndDropFetchOne;
-type fetchAll = Record<string, WinfittsFetchOne | DragAndDropFetchOne[]>;
 
 class RawData {
     protected async head(locator: Locator): Promise<head> {

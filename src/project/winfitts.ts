@@ -96,13 +96,15 @@ class WinfittsProject extends Project implements IProject {
     }
 
     public async setup(page: Page, r: CreateProjectRequest) {
-        const result = await super.setup(page, r);
-        await this.calibrate({
-            Project: result.Detail,
-            Device: result.Device,
-            Calibrate: Settings.Calibrate,
-        });
-        return result;
+        const results = await super.setup(page, r);
+        for (let i = 0; i < results.Devices.length; i++) {
+            await this.calibrate({
+                Project: results.Detail,
+                Device: results.Devices[i],
+                Calibrate: Settings.Calibrate,
+            });
+        }
+        return results;
     }
 }
 

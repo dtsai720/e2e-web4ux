@@ -21,9 +21,15 @@ const CreateProjectParams = {
     ParticipantCount: "ParticipantCount",
     Token: Token.CSRF,
     Device: {
-        ModelName: "Devices[0].ModelName",
-        DeviceName: "Devices[0].DeviceName",
-        Sort: "Devices[0].Sort",
+        ModelName: (idx: number) => {
+            return `Devices[${idx}].ModelName`;
+        },
+        DeviceName: (idx: number) => {
+            return `Devices[${idx}].DeviceName`;
+        },
+        Sort: (idx: number) => {
+            return `Devices[${idx}].Sort`;
+        },
     },
     Task: {
         Type: "Tasks[0].TaskType",

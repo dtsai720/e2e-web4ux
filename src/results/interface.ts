@@ -1,13 +1,20 @@
 import { Page } from "@playwright/test";
 
-interface WinfittsResultRow {
-    Id: number;
+interface Summary {
+    ModelName: string;
+    DeviceName: string;
+}
+interface WinfittsResultBase {
     Width: number;
     Distance: number;
     CursorMovementTime: number;
     ErrorRate: number;
 }
-interface DragAndDropResultRow {
+interface WinfittsResultSummary extends Summary, WinfittsResultBase {}
+interface WinfittsResultDetail extends WinfittsResultBase {
+    Account: string;
+}
+interface DragAndDropResultBase {
     ArrowTo: string;
     InFolder: number;
     InDesktop: number;
@@ -15,22 +22,22 @@ interface DragAndDropResultRow {
     DoubleClick: number;
     ErrorRate: number;
 }
-interface WinfittsResultDetail {
+interface DragAndDropResultDetail extends DragAndDropResultBase {
     Account: string;
-    Details: WinfittsResultRow[];
 }
-interface DragAndDropResultDetail {
-    Account: string;
-    Details: DragAndDropResultRow[];
-}
+interface DragAndDropResultSummary extends Summary, DragAndDropResultBase {}
 type detail = WinfittsResultDetail | DragAndDropResultDetail;
+type summary = WinfittsResultSummary | DragAndDropResultSummary;
 interface IResult {
-    fetchAll(page: Page, resultId: string): Promise<Record<string, detail>>;
+    results(page: Page, resultId: string): Promise<Record<string, Record<string, detail[]>>>;
+    summary(page: Page, resultId: string): Promise<Record<string, summary>>;
 }
 
 export {
-    WinfittsResultRow,
-    DragAndDropResultRow,
+    summary,
+    detail,
+    WinfittsResultSummary,
+    DragAndDropResultSummary,
     WinfittsResultDetail,
     DragAndDropResultDetail,
     IResult,

@@ -79,11 +79,13 @@ class WinfittsRawData extends RawData implements IRawData {
         await page.goto(url);
         await page.waitForSelector(Selector.Table);
         const table = page.locator(Selector.Table);
-        const output: Record<string, WinfittsFetchOne> = {};
+        const output: Record<string, Record<string, WinfittsFetchOne>> = {};
         for (const row of await table.locator(Selector.Row).all()) {
             const detail = await this.fetchOne(row);
             const account = detail.Account;
-            output[account] = detail;
+            if (output[account] === undefined) output[account] = {};
+            const key = `${detail.ModelName}-${detail.DeviceName}`;
+            output[account][key] = detail;
         }
         return output;
     }

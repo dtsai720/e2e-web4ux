@@ -1,7 +1,8 @@
-import { Page, expect } from "@playwright/test";
+import { Page } from "@playwright/test";
 
 import { Pratice } from "./prototype";
-import { Participant } from "../project/interface";
+import { Device, Participant } from "../project/interface";
+import { TypingPraticeDetails } from "./interface";
 
 class TypingPratice extends Pratice {
     async startOne(page: Page, deviceId: string, account: string) {
@@ -19,7 +20,6 @@ class TypingPratice extends Pratice {
             const key = context[i];
             for (let j = 0; j < key.length; j++) {
                 if (/^\s*$/.test(key[j])) {
-                    console.log("enter space");
                     await page.keyboard.press("Space");
                 } else await locator.type(key[j], { delay: 5 });
             }
@@ -29,6 +29,12 @@ class TypingPratice extends Pratice {
             await new Promise(f => setTimeout(f, 1000));
             if (Date.now() - start > 50000) break;
         }
+        // await locator.press("Alt+A");
+        // await locator.press("Alt+C");
+        // await locator.press("Alt+V");
+        // await locator.press("Alt+V");
+        // await locator.press("Alt+V");
+        // await locator.press("Escape");
         await new Promise(f => setTimeout(f, 1000));
         await locator.press("Escape");
         await page.waitForSelector("#btnFinish");
@@ -37,11 +43,18 @@ class TypingPratice extends Pratice {
         await page.getByRole("button", { name: "Finish" }).click();
     }
 
-    async start(page: Page, deviceId: string, participants: Participant[]) {
-        for (let i = 0; i < participants.length; i++) {
-            const account = participants[i].Account;
-            await this.startOne(page, deviceId, account);
+    async start(page: Page, devices: Device[], participants: Participant[]) {
+        const output: Record<string, Record<string, TypingPraticeDetails>> = {};
+        for (let i = 0; i < devices.length; i++) {
+            const device = devices[i];
+            const key = `${device.DeviceName}-${device.ModelName}`;
+            for (let j = 0; j < participants.length; j++) {
+                const account = participants[j].Account;
+                await this.startOne(page, device.Id, account);
+                // output[account][key] = await this.startOne(page, device.Id, account);
+            }
         }
+        return output;
     }
 }
 

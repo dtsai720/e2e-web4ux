@@ -4,7 +4,7 @@ import { HTML } from "../http/constants";
 import { Settings } from "../config";
 import { Pratice } from "./prototype";
 import { DragSide, EventType } from "./constants";
-import { Participant } from "../project/interface";
+import { Device, Participant } from "../project/interface";
 import {
     DragAndDropPraticeDetails,
     DragAndDropEvent,
@@ -35,6 +35,7 @@ const Selector = {
 } as const;
 
 const TotalFileCount = 10;
+const SuccessRate = 60;
 
 class DragAndDropPratices extends Pratice implements IPratice {
     private async delay() {
@@ -46,6 +47,7 @@ class DragAndDropPratices extends Pratice implements IPratice {
         await locator.dblclick();
         await page.waitForSelector(Selector.Close(idx));
         await page.locator(Selector.Close(idx)).click();
+        return { EventType: EventType.DobuleClick, DragSide: DragSide.Folder };
     }
 
     private async moveToDesktop(locator: Locator, idx: number, from: Box, box: Box) {
@@ -53,18 +55,21 @@ class DragAndDropPratices extends Pratice implements IPratice {
         const steps = idx === 1 ? box.width + 1 : -2;
         const x = box.x - from.x + steps;
         await locator.dragTo(locator, { force: true, targetPosition: { x, y } });
+        return { EventType: EventType.DragAndDrop, DragSide: DragSide.Desktop };
     }
 
     private async moveToFolder(locator: Locator) {
         const x = 1;
         const y = 1;
         await locator.dragTo(locator, { force: true, targetPosition: { x, y } });
+        return { EventType: EventType.DragAndDrop, DragSide: DragSide.Folder };
     }
 
     private async moveToOvershot(locator: Locator, idx: number, from: Box, to: Box) {
         const y = 1;
         const x = idx === 1 ? -from.x + to.x + to.width + 1 : -from.x + to.x - 2;
         await locator.dragTo(locator, { force: true, targetPosition: { x, y } });
+        return { EventType: EventType.DragAndDrop, DragSide: DragSide.Overshot };
     }
 
     private async moveToNext(
@@ -75,36 +80,28 @@ class DragAndDropPratices extends Pratice implements IPratice {
         window: Locator
     ) {
         const locator = page.locator(Selector.File(praticeIdx, fileIdx)).first();
+        const windowBox = await window.boundingBox();
+        if (windowBox === null) throw new Error("box cannot be null");
         const from = await locator.boundingBox();
         if (from === null) throw new Error("from cannot be null");
+        const to = await target.boundingBox();
+        if (to === null) throw new Error("target cannot be null");
         const choice = Math.random() * 100;
         const output: DragAndDropEvent[] = [];
-        if (choice > 85) {
-            await this.dblclick(page, locator, praticeIdx);
-            output.push({ EventType: EventType.DobuleClick, DragSide: DragSide.Folder });
-        } else if (choice > 70) {
-            const windowBox = await window.boundingBox();
-            if (windowBox === null) throw new Error("box cannot be null");
-            await this.moveToDesktop(locator, praticeIdx, from, windowBox);
-            output.push({ EventType: EventType.DragAndDrop, DragSide: DragSide.Desktop });
-        } else if (choice > 55) {
-            await this.moveToFolder(locator);
-            output.push({ EventType: EventType.DragAndDrop, DragSide: DragSide.Folder });
-        } else if (choice > 40) {
-            const to = await target.boundingBox();
-            if (to === null) throw new Error("target cannot be null");
-            await this.moveToOvershot(locator, praticeIdx, from, to);
-            output.push({ EventType: EventType.DragAndDrop, DragSide: DragSide.Overshot });
-        }
 
+        if (choice > 90) output.push(await this.dblclick(page, locator, praticeIdx));
+        else if (choice > 80)
+            output.push(await this.moveToDesktop(locator, praticeIdx, from, windowBox));
+        else if (choice > 70) output.push(await this.moveToFolder(locator));
+        else if (choice > SuccessRate)
+            output.push(await this.moveToOvershot(locator, praticeIdx, from, to));
         await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
         await this.delay();
-
         await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
         await locator.dragTo(target);
         await this.delay();
         output.push({ EventType: EventType.DragAndDrop, DragSide: DragSide.Target });
-        return output;
+        return { Result: output, NumberOfMove: 1 + choice > SuccessRate ? 1 : 0 } as const;
     }
 
     async startOne(page: Page, deviceId: string, account: string) {
@@ -120,10 +117,12 @@ class DragAndDropPratices extends Pratice implements IPratice {
             const window = page.locator(Selector.Window(praticeIdx));
             const results: DragAndDropPraticeResult[] = [];
             for (let fileIdx = 1; fileIdx <= TotalFileCount; fileIdx++) {
-                const Events = await this.moveToNext(page, praticeIdx, fileIdx, target, window);
+                const result = await this.moveToNext(page, praticeIdx, fileIdx, target, window);
+                const Events = result.Result;
+                const NumberOfMove = result.NumberOfMove;
                 const FileIndex = `file${fileIdx}`;
                 const IsPassed = Events.length === 1;
-                results.push({ Events, FileIndex, IsPassed });
+                results.push({ Events, FileIndex, IsPassed, NumberOfMove });
             }
             output.Details.push(results);
             await new Promise(f => setTimeout(f, Settings.DragAndDropDelay));
@@ -133,11 +132,16 @@ class DragAndDropPratices extends Pratice implements IPratice {
         return output;
     }
 
-    async start(page: Page, deviceId: string, participants: Participant[]) {
-        const output: Record<string, DragAndDropPraticeDetails> = {};
-        for (let i = 0; i < participants.length; i++) {
-            const account = participants[i].Account;
-            output[account] = await this.startOne(page, deviceId, account);
+    async start(page: Page, devices: Device[], participants: Participant[]) {
+        const output: Record<string, Record<string, DragAndDropPraticeDetails>> = {};
+        for (let i = 0; i < devices.length; i++) {
+            const device = devices[i];
+            const key = `${device.DeviceName}-${device.ModelName}`;
+            for (let j = 0; j < participants.length; j++) {
+                const account = participants[j].Account;
+                if (output[account] === undefined) output[account] = {};
+                output[account][key] = await this.startOne(page, device.Id, account);
+            }
         }
         return output;
     }

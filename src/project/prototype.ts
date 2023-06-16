@@ -1,8 +1,8 @@
 import { Page } from "@playwright/test";
-import { Account } from "../config";
-import { Token } from "../http/constants";
+import { Account, Settings } from "../config";
+import { CreateProjectParams } from "./constants";
 import { URL, Headers, Method, HTML } from "../http/constants";
-import { CreateProjectRequest, Participant } from "./interface";
+import { CreateProjectRequest, Device, Participant } from "./interface";
 import { FetchOne } from "./interface";
 import { Default } from "./constants";
 
@@ -30,22 +30,6 @@ const QueryParams = {
     OrderBy: "OrderBy",
     CreateBy: "CreateBy",
     ProjectListType: "ProjectListType",
-} as const;
-
-const CreateProjectParams = {
-    ProjectName: "ProjectName",
-    ParticipantCount: "ParticipantCount",
-    Token: Token.CSRF,
-    Device: {
-        ModelName: "Devices[0].ModelName",
-        DeviceName: "Devices[0].DeviceName",
-        Sort: "Devices[0].Sort",
-    },
-    Task: {
-        Type: "Tasks[0].TaskType",
-        Sort: "Tasks[0].Sort",
-        TrailsTestRound: "Tasks[0].TrailsTestRound",
-    },
 } as const;
 
 const Selector = {
@@ -79,9 +63,14 @@ class Project {
         params.append(CreateProjectParams.ProjectName, r.ProjectName);
         params.append(CreateProjectParams.ParticipantCount, r.ParticipantCount.toString());
         params.append(CreateProjectParams.Token, this.token);
-        params.append(CreateProjectParams.Device.ModelName, r.ModelName);
-        params.append(CreateProjectParams.Device.DeviceName, r.DeviceName);
-        params.append(CreateProjectParams.Device.Sort, "0");
+        for (let i = 0; i < r.DeviceCount; i++) {
+            const ModelNameParam = CreateProjectParams.Device.ModelName(i);
+            const DeviceNamParam = CreateProjectParams.Device.DeviceName(i);
+            const Sort = CreateProjectParams.Device.Sort(i);
+            params.append(ModelNameParam, i.toString());
+            params.append(DeviceNamParam, i.toString());
+            params.append(Sort, i.toString());
+        }
         params.append(CreateProjectParams.Task.Sort, "0");
         return params;
     }
@@ -99,17 +88,20 @@ class Project {
     public async device(page: Page, projectId: string) {
         await page.goto([URL.FetchDevicePrefix, projectId].join("/"));
         await page.waitForSelector(Selector.Device.TableRow);
-        const locator = page.locator(Selector.Device.TableRow);
-        const elements = {
-            ModelName: locator.locator(Selector.Device.ModelName),
-            DeviceName: locator.locator(Selector.Device.DeviceName),
-            Id: locator.locator(Selector.Device.Id),
-        } as const;
-        return {
-            ModelName: (await elements.ModelName.getAttribute(HTML.Attribute.Value)) || "",
-            DeviceName: (await elements.DeviceName.getAttribute(HTML.Attribute.Value)) || "",
-            Id: (await elements.Id.getAttribute(HTML.Attribute.Value)) || "",
-        } as const;
+        const output: Device[] = [];
+        for (const items of await page.locator(Selector.Device.TableRow).all()) {
+            const elements = {
+                ModelName: items.locator(Selector.Device.ModelName),
+                DeviceName: items.locator(Selector.Device.DeviceName),
+                Id: items.locator(Selector.Device.Id),
+            } as const;
+            output.push({
+                ModelName: (await elements.ModelName.getAttribute(HTML.Attribute.Value)) || "",
+                DeviceName: (await elements.DeviceName.getAttribute(HTML.Attribute.Value)) || "",
+                Id: (await elements.Id.getAttribute(HTML.Attribute.Value)) || "",
+            });
+        }
+        return output;
     }
 
     public async participant(page: Page, projectId: string, participantCount: number) {
@@ -201,9 +193,9 @@ class Project {
 
     public async setup(page: Page, r: CreateProjectRequest) {
         await this.create(r);
-        const detail = await this.fetchOne(r.ProjectName, Account.Email);
-        const device = await this.device(page, detail.ProjectId);
-        return { Detail: detail, Device: device };
+        const Detail = await this.fetchOne(r.ProjectName, Account.Email);
+        const Devices = await this.device(page, Detail.ProjectId);
+        return { Detail, Devices };
     }
 }
 

@@ -1,11 +1,11 @@
-import { Page } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 
 import { Settings } from "../config";
 import { Position, EuclideanDistance } from "../math";
 import { HTML } from "../http/constants";
 import { ClickEvent, IPratice, WinfittsPraticeDetails } from "./interface";
 import { Pratice } from "./prototype";
-import { Participant } from "../project/interface";
+import { Device, Participant } from "../project/interface";
 
 const Selector = {
     Pratices: {
@@ -17,6 +17,19 @@ const Selector = {
 } as const;
 
 const TotalTrailCount = 32;
+interface ClickElseRequest {
+    current: Position;
+    FailedPosition: Position;
+    sleepTime: number;
+    difficulty: number;
+}
+interface BeforeStartCliclRequest {
+    target: Locator;
+    FailedPosition: Position;
+    Target: Position;
+    current: Position;
+    sleepTime: number;
+}
 
 const NewClickEvent = (x: number, y: number, timestamp: number) => {
     return { X: x, Y: y, Timestamp: timestamp };
@@ -63,14 +76,10 @@ class WinfittsPratices extends Pratice implements IPratice {
         }
     }
 
-    private async runOnce(page: Page) {
-        await page.waitForSelector(Selector.Pratices.Light.Start);
-        await this.delay();
-        const start = page.locator(Selector.Pratices.Start);
-        const target = page.locator(Selector.Pratices.Target);
+    private async runOneParams(start: Locator, target: Locator) {
         const startBox = await start.boundingBox();
         const targetBox = await target.boundingBox();
-        const Else: ClickEvent[] = [];
+
         if (startBox === null || targetBox === null) throw new Error("position cannot be null");
         const Start = NewClickEvent(startBox.x, startBox.y, 0);
         const Target = NewClickEvent(targetBox.x, targetBox.y, 0);
@@ -82,37 +91,74 @@ class WinfittsPratices extends Pratice implements IPratice {
         const range = this.range(difficulty);
         const sleepTime = Math.random() * (range.Max - range.Min) + range.Min;
         const current = { X: Start.X, Y: Start.Y };
+        return { Start, Target, Width, Distance, sleepTime, current, difficulty };
+    }
+
+    private async beforeStartClick(page: Page, r: BeforeStartCliclRequest) {
+        if (Math.random() * 10 <= 8) return null;
+        if (Math.random() * 10 > 7) {
+            await r.target.click();
+            return NewClickEvent(r.Target.X, r.Target.Y, Math.floor(Date.now()));
+        }
+        await this.move(page, r.current, r.FailedPosition, r.sleepTime / Settings.MouseMoveDelay);
+        await page.mouse.click(r.FailedPosition.X, r.FailedPosition.Y);
+        return NewClickEvent(r.FailedPosition.X, r.FailedPosition.Y, Math.floor(Date.now()));
+    }
+
+    private async dblCkickInStart(start: Locator) {
+        if (Math.random() * 10 <= 9) {
+            await start.click();
+            return { isFailed: false };
+        }
+        await start.dblclick();
+        return { isFailed: true };
+    }
+
+    private async clickElse(page: Page, r: ClickElseRequest) {
+        if (!this.isFailed(r.difficulty)) return null;
+        await this.move(page, r.current, r.FailedPosition, r.sleepTime / Settings.MouseMoveDelay);
+        await page.mouse.click(r.FailedPosition.X, r.FailedPosition.Y);
+        return NewClickEvent(r.FailedPosition.X, r.FailedPosition.Y, Math.floor(Date.now()));
+    }
+
+    private async runOnce(page: Page) {
+        await page.waitForSelector(Selector.Pratices.Light.Start);
+        await this.delay();
+        const start = page.locator(Selector.Pratices.Start);
+        const target = page.locator(Selector.Pratices.Target);
+        const { Start, Target, Width, Distance, sleepTime, current, difficulty } =
+            await this.runOneParams(start, target);
         let IsFailed = false;
-        if (Math.random() * 10 > 8) {
-            if (Math.random() * 10 > 7) {
-                await target.click();
-                Else.push(NewClickEvent(Target.X, Target.Y, Math.floor(Date.now())));
-            } else {
-                const X = (Start.X + Target.X) / 2;
-                const Y = (Start.Y + Target.Y) / 2;
-                await this.move(page, current, { X, Y }, sleepTime / Settings.MouseMoveDelay);
-                await page.mouse.click(X, Y);
-                Else.push(NewClickEvent(X, Y, Math.floor(Date.now())));
-            }
-            await this.delay();
+        const Else: ClickEvent[] = [];
+        const FailedPosition = { X: (Start.X + Target.X) / 2, Y: (Start.Y + Target.Y) / 2 };
+        const beforeStartClickRequest = {
+            target: target,
+            FailedPosition: FailedPosition,
+            Target: Target,
+            current: current,
+            sleepTime: sleepTime,
+        } as const;
+        const beforeStartClick = await this.beforeStartClick(page, beforeStartClickRequest);
+        if (beforeStartClick !== null) {
+            Else.push(beforeStartClick);
+            this.delay();
         }
 
-        if (Math.random() * 10 > 9) {
-            await start.dblclick();
-            Start.Timestamp = Math.floor(Date.now());
+        const { isFailed } = await this.dblCkickInStart(start);
+        Start.Timestamp = Math.floor(Date.now());
+        if (isFailed) {
             Else.push(NewClickEvent(Start.X, Start.Y, Math.floor(Date.now())));
             IsFailed ||= true;
-        } else {
-            await start.click();
-            Start.Timestamp = Math.floor(Date.now());
         }
-
-        if (this.isFailed(difficulty)) {
-            const X = (Start.X + Target.X) / 2;
-            const Y = (Start.Y + Target.Y) / 2;
-            await this.move(page, current, { X, Y }, sleepTime / Settings.MouseMoveDelay);
-            await page.mouse.click(X, Y);
-            Else.push(NewClickEvent(X, Y, Math.floor(Date.now())));
+        const cllickRequest = {
+            current: current,
+            FailedPosition: FailedPosition,
+            sleepTime: sleepTime,
+            difficulty: difficulty,
+        } as const;
+        const elseEvent = await this.clickElse(page, cllickRequest);
+        if (elseEvent !== null) {
+            Else.push(elseEvent);
             if (Settings.EnableTimeSleep) await new Promise(f => setTimeout(f, sleepTime));
             IsFailed ||= true;
         }
@@ -135,11 +181,16 @@ class WinfittsPratices extends Pratice implements IPratice {
         return results;
     }
 
-    async start(page: Page, deviceId: string, participants: Participant[]) {
-        const output: Record<string, WinfittsPraticeDetails> = {};
-        for (let i = 0; i < participants.length; i++) {
-            const account = participants[i].Account;
-            output[account] = await this.startOne(page, deviceId, account);
+    async start(page: Page, devices: Device[], participants: Participant[]) {
+        const output: Record<string, Record<string, WinfittsPraticeDetails>> = {};
+        for (let i = 0; i < devices.length; i++) {
+            const device = devices[i];
+            const key = `${device.DeviceName}-${device.ModelName}`;
+            for (let j = 0; j < participants.length; j++) {
+                const account = participants[j].Account;
+                if (output[account] === undefined) output[account] = {};
+                output[account][key] = await this.startOne(page, device.Id, account);
+            }
         }
         return output;
     }
