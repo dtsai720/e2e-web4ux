@@ -4,7 +4,7 @@ import { DragAndDropResultDetail, DragAndDropResultSummary, IResult } from "./in
 
 class DragAndDropResult extends Result implements IResult {
     protected urlPrefix = URL.DragAndDropResultPrefix;
-    protected detailLength = 8;
+    protected detailLength = 12;
     protected toCanonicalResults(array: string[], Account: string): DragAndDropResultDetail {
         return {
             Account: Account,

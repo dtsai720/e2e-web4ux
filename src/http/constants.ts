@@ -40,6 +40,8 @@ const URL = {
     WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRawData`,
     DragAndDropRawDataPrefix: `${Settings.Host}/Project/DragRawData`,
     DragAndDropResultPrefix: `${Settings.Host}/Project/DragDropResult`,
+    TypingResultPrefix: `${Settings.Host}/Project/TypingResult`,
+    TypingRawDataPrefix: `${Settings.Host}/Project/TypingRawData`,
 } as const;
 
 export { Headers, Method, URL, Token, HTML };

@@ -14,8 +14,7 @@ export default defineConfig({
     /* Maximum time one test can run for. */
     timeout:
         parseInt(process.env.ParticipantCount || "12") *
-        60 *
-        1000 *
+        180000 *
         parseInt(process.env.DeviceCount || "1"),
     expect: {
         /**

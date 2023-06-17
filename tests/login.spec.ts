@@ -8,7 +8,7 @@ const redirectURL = async (page: Page, email: string, password: string) => {
     await page.getByLabel(HTML.Label.Email).fill(email);
     await page.getByLabel(HTML.Label.Password).fill(password);
     await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Login }).click();
-    return await page.url();
+    return page.url();
 };
 
 test.describe("Validate Login", () => {

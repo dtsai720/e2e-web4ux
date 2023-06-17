@@ -18,7 +18,6 @@ class TypingPratice extends Pratice {
 
     async startOne(page: Page, deviceId: string, account: string) {
         await super.prepare(page, deviceId, account);
-        const locator = page.locator(Selector.Textarea);
         const texts: string[] = [];
         for (const li of await page.locator(Selector.TextBox).all()) {
             texts.push((await li.innerText()) || "");
@@ -26,26 +25,38 @@ class TypingPratice extends Pratice {
         const context = texts.join("").split("\n");
         const start = Date.now();
         await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.StartTyping }).click();
+        await page.mouse.move(0, 0);
+
+        const locator = page.locator(Selector.Textarea);
         await locator.focus();
+        let currentText = "";
+        const contexts: string[] = [];
         for (let i = 0; i < context.length; i++) {
-            const key = context[i];
-            for (let j = 0; j < key.length; j++) {
-                if (this.isSpace(key[j])) {
-                    await page.keyboard.press("Space");
-                } else await locator.type(key[j], { delay: 5 });
+            for (let j = 0; j < context[i].length; j++) {
+                currentText += context[i][j];
+                if (this.isSpace(context[i][j])) {
+                    await locator.press("Space");
+                    if (Date.now() - start > 50000) break;
+                } else await locator.type(context[i][j], { delay: 250 });
+                if (currentText.includes("and")) {
+                    await locator.click({ clickCount: 2 });
+                    await locator.press("Delete");
+                    await locator.type("a", { delay: 250 });
+                    await locator.type("n", { delay: 250 });
+                    await locator.type("d", { delay: 250 });
+                    contexts.push(currentText);
+                    currentText = "";
+                }
             }
-            // await locator.type(key, {delay: 50})
-            await page.keyboard.press("Space");
-            // await locator.press('Enter')
-            await new Promise(f => setTimeout(f, 1000));
             if (Date.now() - start > 50000) break;
+            await locator.press("Enter");
+            currentText += "\n";
         }
         await new Promise(f => setTimeout(f, 1000));
         await locator.press("Escape");
         await page.waitForSelector(Selector.Finish);
-        // expect(1).toEqual(0)
-
         await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Finish }).click();
+        contexts.push(currentText);
     }
 
     async start(page: Page, devices: Device[], participants: Participant[]) {

@@ -122,9 +122,9 @@ function* generateRawData(rawdata: Record<string, Record<string, WinfittsFetchOn
 const normalizeRawData = (rawdata: Record<string, Record<string, WinfittsFetchOne>>) => {
     const output: Record<string, SimpleSummary> = {};
     const candidates = generateRawData(rawdata);
-    for (let values = candidates.next(); !values.done; values = candidates.next()) {
-        const title = values.value.title;
-        const key = values.value.key;
+    for (let current = candidates.next(); !current.done; current = candidates.next()) {
+        const title = current.value.title;
+        const key = current.value.key;
         if (output[key] === undefined) output[key] = { CursorMovementTime: 0, ValidErrorCount: 0 };
         output[key].CursorMovementTime += title.EventTime;
         output[key].ValidErrorCount += title.IsFailed ? 1 : 0;

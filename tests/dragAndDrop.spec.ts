@@ -46,13 +46,13 @@ const comparePraticeAndRawData = (
     pratices: DragAndDropPraticeResult[],
     rawdata: DragAndDropFetchOne
 ) => {
-    expect(pratices.length).toEqual(rawdata.Result.length);
+    expect(pratices.length).toEqual(rawdata.Results.length);
     let EventTime = 0;
     // let NumberOfMove = 0
     for (let i = 0; i < pratices.length; i++) {
         logger(`DragAndDrop: Compare file${i}`);
         const pratice = pratices[i];
-        const data = rawdata.Result[i];
+        const data = rawdata.Results[i];
         expect(pratice.Events.length === 1).toEqual(pratice.IsPassed);
         expect(pratice.IsPassed).toEqual(data.Title.IsPassed);
         expect(pratice.FileIndex).toEqual(data.Title.FileIndex);
@@ -82,8 +82,8 @@ const convertToResult = (rawdata: DragAndDropFetchOne) => {
         DoubleClick: 0,
         TotalErrorCount: 0,
     };
-    for (let i = 0; i < rawdata.Result.length; i++) {
-        const data = rawdata.Result[i];
+    for (let i = 0; i < rawdata.Results.length; i++) {
+        const data = rawdata.Results[i];
         if (data.Title.IsPassed) continue;
         output.TotalErrorCount++;
         const detail = data.Detail[data.Detail.length - 2];
@@ -140,19 +140,20 @@ function* generateRawData(rawdata: Record<string, Record<string, DragAndDropFetc
 const normalizeRawData = (rawdata: Record<string, Record<string, DragAndDropFetchOne[]>>) => {
     const output: Record<string, SimpleSummary> = {};
     const candidates = generateRawData(rawdata);
-    for (let values = candidates.next(); !values.done; values = candidates.next()) {
-        const fetchOne = values.value.fetchOne;
-        const key = values.value.key;
+    for (let current = candidates.next(); !current.done; current = candidates.next()) {
+        const fetchOne = current.value.fetchOne;
+        const key = current.value.key;
         if (output[key] === undefined) output[key] = NewSimpleSummary();
-        for (let j = 0; j < fetchOne.Result.length; j++) {
-            const data = fetchOne.Result[j];
+        for (let i = 0; i < fetchOne.Results.length; i++) {
+            const data = fetchOne.Results[i];
             if (data.Title.IsPassed) continue;
+            const detail = data.Detail;
             output[key].ErrorCount++;
-            const idx = data.Detail.length - 2;
-            if (data.Detail[idx].EventType === EventType.DobuleClick) output[key].DoubleClick++;
-            else if (data.Detail[idx].DragSide === DragSide.Folder) output[key].InFolder++;
-            else if (data.Detail[idx].DragSide === DragSide.Overshot) output[key].Overshop++;
-            else if (data.Detail[idx].DragSide === DragSide.Desktop) output[key].InDesktop++;
+            const idx = detail.length - 2;
+            if (detail[idx].EventType === EventType.DobuleClick) output[key].DoubleClick++;
+            else if (detail[idx].DragSide === DragSide.Folder) output[key].InFolder++;
+            else if (detail[idx].DragSide === DragSide.Overshot) output[key].Overshop++;
+            else if (detail[idx].DragSide === DragSide.Desktop) output[key].InDesktop++;
         }
     }
     return output;

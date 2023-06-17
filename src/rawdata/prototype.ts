@@ -6,6 +6,11 @@ import {
     DragAndDropHead,
     DragAndDropRawDataResult,
     DragAndDropTitle,
+    TypingDetail,
+    TypingFetchOne,
+    TypingHead,
+    TypingResult,
+    TypingTitle,
     WinfittsDetail,
     WinfittsFetchOne,
     WinfittsHead,
@@ -23,12 +28,12 @@ const Selector = {
     ClickResults: "div.data3",
 } as const;
 
-type head = WinfittsHead | DragAndDropHead;
-type title = WinfittsTitle | DragAndDropTitle;
-type detail = WinfittsDetail | DragAndDropDetail;
-type details = WinfittsDetail[] | DragAndDropDetail[];
-type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[];
-type fetchOne = WinfittsFetchOne | DragAndDropFetchOne;
+type head = WinfittsHead | DragAndDropHead | TypingHead;
+type title = WinfittsTitle | DragAndDropTitle | TypingTitle;
+type detail = WinfittsDetail | DragAndDropDetail | TypingDetail;
+type details = WinfittsDetail[] | DragAndDropDetail[] | TypingDetail[];
+type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[] | TypingResult[];
+type fetchOne = WinfittsFetchOne | DragAndDropFetchOne | TypingFetchOne;
 
 class RawData {
     protected async head(locator: Locator): Promise<head> {

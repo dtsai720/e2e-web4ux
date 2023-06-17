@@ -70,7 +70,7 @@ class DragAndDropRawData extends RawData implements IRawData {
             ArrowTo: participant.DragSide,
             NumberOfMove: participant.NumberOfMove,
             EventTime: participant.EventTime,
-            Result: await this.result(row),
+            Results: await this.result(row),
         } as const;
     }
 
