@@ -31,11 +31,11 @@ const Selector = {
 type head = WinfittsHead | DragAndDropHead | TypingHead;
 type title = WinfittsTitle | DragAndDropTitle | TypingTitle;
 type detail = WinfittsDetail | DragAndDropDetail | TypingDetail;
-type details = WinfittsDetail[] | DragAndDropDetail[] | TypingDetail[];
 type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[] | TypingResult[];
 type fetchOne = WinfittsFetchOne | DragAndDropFetchOne | TypingFetchOne;
 
 class RawData {
+    protected urlPrefix: string;
     protected async head(locator: Locator): Promise<head> {
         const array: string[] = [];
         for (const column of await locator.locator(Selector.Head).all()) {
@@ -69,6 +69,16 @@ class RawData {
         return array;
     }
 
+    protected async *prepareFetchAll(page: Page, resultId: string) {
+        const url = [this.urlPrefix, resultId].join("/");
+        await page.goto(url);
+        await page.waitForSelector(Selector.Table);
+        const table = page.locator(Selector.Table);
+        for (const row of await table.locator(Selector.Row).all()) {
+            yield row;
+        }
+    }
+
     protected toCanonicalTitle(array: string[]): title {
         throw new Error("Not Implement");
     }
@@ -81,7 +91,7 @@ class RawData {
         throw new Error("Not Implement");
     }
 
-    protected async detail(locator: Locator): Promise<details> {
+    protected async detail(locator: Locator): Promise<detail[]> {
         throw new Error("Not Implement");
     }
 

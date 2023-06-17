@@ -5,6 +5,7 @@ import { Selector } from "./constants";
 import { URL } from "../http/constants";
 
 class TypingRawData extends RawData {
+    protected urlPrefix = URL.TypingRawDataPrefix;
     protected toCanonicalHead(array: ReadonlyArray<string>) {
         return {
             Account: array[1],
@@ -46,7 +47,7 @@ class TypingRawData extends RawData {
 
     protected async fetchOne(row: Locator) {
         const participant = await this.head(row);
-        if (!("Accuracy" in participant)) throw new Error("");
+        if (!("Accuracy" in participant)) throw new Error("TypeError: Required TypingHead");
         return {
             Account: participant.Account,
             DeviceName: participant.DeviceName,
@@ -60,13 +61,10 @@ class TypingRawData extends RawData {
     }
 
     async fetchAll(page: Page, resultId: string) {
-        const url = [URL.TypingRawDataPrefix, resultId].join("/");
-        await page.goto(url);
-        await page.waitForSelector(Selector.Table);
-        const table = page.locator(Selector.Table);
         const output: Record<string, Record<string, TypingFetchOne>> = {};
-        for (const row of await table.locator(Selector.Row).all()) {
-            const detail = await this.fetchOne(row);
+        const candidates = this.prepareFetchAll(page, resultId);
+        for (let cur = await candidates.next(); !cur.done; cur = await candidates.next()) {
+            const detail = await this.fetchOne(cur.value);
             const account = detail.Account;
             if (output[account] === undefined) output[account] = {};
             const key = `${detail.ModelName}-${detail.DeviceName}`;

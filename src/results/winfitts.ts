@@ -5,8 +5,9 @@ import { URL } from "../http/constants";
 class WinfittsResult extends Result implements IResult {
     protected urlPrefix = URL.WinfittsResultPrefix;
     protected detailLength = 6;
+    protected summaryLength = 6;
     protected toCanonicalSummaryDetail(candidate: string[]): WinfittsResultSummary {
-        if (candidate.length !== this.detailLength) throw new Error("");
+        if (candidate.length !== this.summaryLength) throw new Error("");
         const ModelName = candidate[0];
         const DeviceName = candidate[1];
         const wd = candidate[3].split("/");
@@ -19,7 +20,7 @@ class WinfittsResult extends Result implements IResult {
     }
 
     protected toCanonicalSummaryKey(candidate: string[]): string {
-        if (candidate.length !== this.detailLength) throw new Error("");
+        if (candidate.length !== this.summaryLength) throw new Error("");
         const ModelName = candidate[0];
         const DeviceName = candidate[1];
         const wd = candidate[3].split("/");

@@ -129,7 +129,6 @@ const normalizeRawData = (rawdata: Record<string, Record<string, WinfittsFetchOn
         output[key].CursorMovementTime += title.EventTime;
         output[key].ValidErrorCount += title.IsFailed ? 1 : 0;
     }
-
     return output;
 };
 

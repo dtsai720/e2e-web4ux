@@ -14,6 +14,7 @@ const Selector = {
 class Result {
     protected urlPrefix: string;
     protected detailLength: number;
+    protected summaryLength: number;
     protected async textContent(locator: Locator) {
         const candidates: string[][] = [];
         for (const items of await locator.locator(HTML.Tag.Tr).all()) {

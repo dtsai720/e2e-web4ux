@@ -4,7 +4,8 @@ import { DragAndDropResultDetail, DragAndDropResultSummary, IResult } from "./in
 
 class DragAndDropResult extends Result implements IResult {
     protected urlPrefix = URL.DragAndDropResultPrefix;
-    protected detailLength = 12;
+    protected detailLength = 8;
+    protected summaryLength = 8;
     protected toCanonicalResults(array: string[], Account: string): DragAndDropResultDetail {
         return {
             Account: Account,
@@ -18,7 +19,7 @@ class DragAndDropResult extends Result implements IResult {
     }
 
     protected toCanonicalSummaryDetail(candidate: string[]): DragAndDropResultSummary {
-        if (candidate.length !== this.detailLength) throw new Error("");
+        if (candidate.length !== this.summaryLength) throw new Error("");
         return {
             ModelName: candidate[0],
             DeviceName: candidate[1],
@@ -32,7 +33,7 @@ class DragAndDropResult extends Result implements IResult {
     }
 
     protected toCanonicalSummaryKey(candidate: string[]): string {
-        if (candidate.length !== this.detailLength) throw new Error("");
+        if (candidate.length !== this.summaryLength) throw new Error("");
         const ModelName = candidate[0];
         const DeviceName = candidate[1];
         const ArrowTo = candidate[2].toLowerCase();

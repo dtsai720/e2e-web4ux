@@ -11,6 +11,7 @@ import {
 } from "./interface";
 
 class DragAndDropRawData extends RawData implements IRawData {
+    protected urlPrefix = URL.DragAndDropRawDataPrefix;
     protected toCanonicalHead(array: ReadonlyArray<string>) {
         return {
             Account: array[1],
@@ -62,7 +63,7 @@ class DragAndDropRawData extends RawData implements IRawData {
 
     protected async fetchOne(row: Locator): Promise<DragAndDropFetchOne> {
         const participant = await this.head(row);
-        if (!("DragSide" in participant)) throw new Error("");
+        if (!("DragSide" in participant)) throw new Error("TypeError: required DragAndDropHead");
         return {
             Account: participant.Account,
             ModelName: participant.ModelName,
@@ -75,13 +76,10 @@ class DragAndDropRawData extends RawData implements IRawData {
     }
 
     async fetchAll(page: Page, resultId: string) {
-        const url = [URL.DragAndDropRawDataPrefix, resultId].join("/");
-        await page.goto(url);
-        await page.waitForSelector(Selector.Table);
-        const table = page.locator(Selector.Table);
         const output: Record<string, Record<string, DragAndDropFetchOne[]>> = {};
-        for (const row of await table.locator(Selector.Row).all()) {
-            const detail = await this.fetchOne(row);
+        const candidates = this.prepareFetchAll(page, resultId);
+        for (let cur = await candidates.next(); !cur.done; cur = await candidates.next()) {
+            const detail = await this.fetchOne(cur.value);
             const account = detail.Account;
             const key = `${detail.ModelName}-${detail.DeviceName}`;
             if (output[account] === undefined) output[account] = {};

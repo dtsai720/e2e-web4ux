@@ -5,6 +5,7 @@ import { Result } from "./prototype";
 class TypingResult extends Result {
     protected urlPrefix = URL.TypingResultPrefix;
     protected detailLength = 12;
+    protected summaryLength = 9;
     protected toCanonicalResults(array: string[], Account: string): TypingResultDetail {
         const correct = array[0].split("/");
         const wrong = array[1].split("/");
@@ -25,12 +26,14 @@ class TypingResult extends Result {
     }
 
     protected toCanonicalSummaryKey(candidate: string[]) {
+        if (candidate.length !== this.summaryLength) throw new Error("");
         const ModelName = candidate[0];
         const DeviceName = candidate[1];
         return [ModelName, DeviceName].join("-");
     }
 
     protected toCanonicalSummaryDetail(candidate: string[]): TypingSummary {
+        if (candidate.length !== this.summaryLength) throw new Error("");
         return {
             ModelName: candidate[0],
             DeviceName: candidate[1],
