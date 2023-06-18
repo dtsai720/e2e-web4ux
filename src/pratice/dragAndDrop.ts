@@ -136,7 +136,7 @@ class DragAndDropPratices extends Pratice implements IPratice {
         const output: Record<string, Record<string, DragAndDropPraticeDetails>> = {};
         for (let i = 0; i < devices.length; i++) {
             const device = devices[i];
-            const key = `${device.DeviceName}-${device.ModelName}`;
+            const key = `${device.ModelName}-${device.DeviceName}`;
             for (let j = 0; j < participants.length; j++) {
                 const account = participants[j].Account;
                 if (output[account] === undefined) output[account] = {};

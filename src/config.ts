@@ -14,6 +14,7 @@ const Default = {
     Typing: {
         TotalTimer: "1",
         CountdownTimer: "60",
+        Time: "45",
     },
 } as const;
 
@@ -38,6 +39,8 @@ const Settings = {
     Typing: {
         TotalTimer: parseInt(process.env.TypingTotalTimer || Default.Typing.TotalTimer),
         CountdownTimer: parseInt(process.env.TypingCountdownTimer || Default.Typing.CountdownTimer),
+        Time: parseInt(process.env.TypingTime || Default.Typing.Time) * 1000,
+        Delay: 50,
     },
     DragAndDropDelay: parseInt(process.env.DragAndDropDelay || Default.DragAndDropDelay),
     DeviceCount: parseInt(process.env.DeviceCount || Default.DeviceCount),

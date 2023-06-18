@@ -67,8 +67,10 @@ class Project {
             const ModelNameParam = CreateProjectParams.Device.ModelName(i);
             const DeviceNamParam = CreateProjectParams.Device.DeviceName(i);
             const Sort = CreateProjectParams.Device.Sort(i);
-            params.append(ModelNameParam, i.toString());
-            params.append(DeviceNamParam, i.toString());
+            const device = `Device:${(i + 1).toString().padStart(4, "0")}`;
+            const model = `Model:${(i + 1).toString().padStart(4, "0")}`;
+            params.append(ModelNameParam, model);
+            params.append(DeviceNamParam, device);
             params.append(Sort, i.toString());
         }
         params.append(CreateProjectParams.Task.Sort, "0");

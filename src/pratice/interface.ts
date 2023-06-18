@@ -31,9 +31,16 @@ interface DragAndDropPraticeDetails {
     Account: string;
     Details: DragAndDropPraticeResult[][];
 }
+interface TypingPraticeResult {
+    Event: string;
+    Details: string[];
+}
 interface TypingPraticeDetails {
     Account: string;
-    Details: DragAndDropPraticeResult[][];
+    CorrectChars: number;
+    WrongChars: number;
+    TypingTime: number;
+    Details: TypingPraticeResult[];
 }
 type startOne = WinfittsPraticeDetails | DragAndDropPraticeDetails | TypingPraticeDetails;
 type response = Promise<Record<string, Record<string, startOne>>>;
@@ -46,6 +53,7 @@ interface IPratice {
 export {
     startOne,
     TypingPraticeDetails,
+    TypingPraticeResult,
     ClickEvent,
     WinfittsPraticeDetails,
     IPratice,
