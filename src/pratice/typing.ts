@@ -40,6 +40,9 @@ const TypingEvent = {
     DoubleClick: (num: number) => {
         return `Double click(${num})`;
     },
+    Gestures: (num: number) => {
+        return `Mouse wheel(${num})`;
+    },
 } as const;
 
 class TypingPratice extends Pratice {
@@ -99,6 +102,9 @@ class TypingPratice extends Pratice {
             output.Details.push({ Event: TypingEvent.MouseMove(1), Details: [] });
         }
 
+        await page.mouse.wheel(0, 100);
+        output.Details.push({ Event: TypingEvent.Gestures(1), Details: [] });
+
         const locator = page.locator(Selector.Textarea);
         await locator.focus();
         let currentText = "";
@@ -110,7 +116,7 @@ class TypingPratice extends Pratice {
                 let char = Article[i][j];
                 if (char != lastChar && Math.random() * 100 > 95) {
                     output.WrongChars++;
-                    char = String.fromCharCode(charCode + 1);
+                    char = String.fromCharCode((charCode % 128) + 1);
                 }
 
                 currentText += char;
@@ -151,7 +157,7 @@ class TypingPratice extends Pratice {
             }
             if (Date.now() - StartTimestamp > Settings.Typing.Time) break;
             //
-            currentText += "\n";
+            currentText += String.fromCharCode(8629);
             await locator.press(Press.Enter);
         }
         // Press ESC
@@ -164,7 +170,6 @@ class TypingPratice extends Pratice {
             Details: [currentText, contexts.join("")],
         });
         output.Details.push({ Event: TypingEvent.Function(1), Details: [Press.Esc] });
-
         await page.waitForSelector(Selector.Finish);
         await page.getByRole(HTML.Role.Button, { name: HTML.Role.Name.Finish }).click();
         output.TypingTime = Date.now() - StartTimestamp;

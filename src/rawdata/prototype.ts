@@ -18,6 +18,7 @@ import {
     WinfittsTitle,
     fetchAll,
 } from "./interface";
+import { Settings } from "../config";
 
 const Selector = {
     Table: "#divData",
@@ -70,6 +71,7 @@ class RawData {
     }
 
     protected async *prepareFetchAll(page: Page, resultId: string) {
+        await new Promise(f => setTimeout(f, Settings.WaittingResultInSecond));
         const url = [this.urlPrefix, resultId].join("/");
         await page.goto(url);
         await page.waitForSelector(Selector.Table);

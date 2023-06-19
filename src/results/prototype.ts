@@ -2,6 +2,7 @@ import { Page, Locator } from "@playwright/test";
 
 import { detail, summary } from "./interface";
 import { HTML } from "../http/constants";
+import { Settings } from "../config";
 
 const Selector = {
     Result: {
@@ -48,6 +49,7 @@ class Result {
         page: Page,
         resultId: string
     ): Promise<Record<string, Record<string, detail[]>>> {
+        await new Promise(f => setTimeout(f, Settings.WaittingResultInSecond));
         const url = [this.urlPrefix, resultId].join("/");
         await page.goto(url);
         const locator = page.locator(Selector.Result.Table);

@@ -16,6 +16,7 @@ const Default = {
         CountdownTimer: "60",
         Time: "45",
     },
+    WaittingResultInSecond: "5",
 } as const;
 
 const Account = {
@@ -44,6 +45,8 @@ const Settings = {
     },
     DragAndDropDelay: parseInt(process.env.DragAndDropDelay || Default.DragAndDropDelay),
     DeviceCount: parseInt(process.env.DeviceCount || Default.DeviceCount),
+    WaittingResultInSecond:
+        parseInt(process.env.WaittingResultInSecond || Default.WaittingResultInSecond) * 1000,
 } as const;
 
 export { Settings, Account };
