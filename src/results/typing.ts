@@ -29,7 +29,7 @@ class TypingResult extends Result {
         if (candidate.length !== this.summaryLength) throw new Error("");
         const ModelName = candidate[0];
         const DeviceName = candidate[1];
-        return [ModelName, DeviceName].join("-");
+        return `${ModelName}-${DeviceName}`;
     }
 
     protected toCanonicalSummaryDetail(candidate: string[]): TypingSummary {

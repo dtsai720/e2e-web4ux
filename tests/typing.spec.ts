@@ -10,8 +10,8 @@ import { TypingPratice } from "../src/pratice/typing";
 import { TypingRawData } from "../src/rawdata/typing";
 import { TypingResult } from "../src/results/typing";
 import { logger } from "../src/logger";
-import { TypingPraticeResult } from "../src/pratice/interface";
-import { TypingDetail, TypingFetchOne } from "../src/rawdata/interface";
+import { TypingPraticeDetails, TypingPraticeResult } from "../src/pratice/interface";
+import { TypingFetchOne } from "../src/rawdata/interface";
 
 const prepare = async (page: Page, context: BrowserContext) => {
     const token = await Token(page);
@@ -55,13 +55,57 @@ const comparePraticeAndRawData = (pratices: TypingPraticeResult[], rawdata: Typi
     expect(idx).toEqual(data.length);
 };
 
-const praticesToResults = (pratices: TypingPraticeResult[]) => {
-    // let ClickCount = 0
-    // let DoubleClickCount = 0
-    // let WordSelectCount = 0
-    // let CursorMoveCount = 0
-    // let GesturesCount = 0
-    // const array = [...pratices]
+interface mapping {
+    DoubleClickCount: number;
+    GesturesCount: number;
+    WordSelectCount: number;
+    CusorMoveCount: number;
+    ClickCount: number;
+    CorrectChars: number;
+    WrongChars: number;
+    TotalTypingTime: number;
+}
+
+const TypingEvent = {
+    MouseMove: "Mouse move",
+    WordSelected: "Select",
+    Click: "Click",
+    DoubleClick: "Double click",
+    Gestures: "Mouse wheel",
+} as const;
+
+const normalizePratice = (Pratice: Record<string, Record<string, TypingPraticeDetails>>) => {
+    const output: Record<string, mapping> = {};
+    for (const account in Pratice) {
+        for (const device in Pratice[account]) {
+            if (output[device] === undefined)
+                output[device] = {
+                    DoubleClickCount: 0,
+                    GesturesCount: 0,
+                    WordSelectCount: 0,
+                    CusorMoveCount: 0,
+                    ClickCount: 0,
+                    CorrectChars: 0,
+                    WrongChars: 0,
+                    TotalTypingTime: 0,
+                };
+
+            const pratices = Pratice[account][device];
+            output[device].CorrectChars += pratices.CorrectChars;
+            output[device].WrongChars += pratices.WrongChars;
+            output[device].TotalTypingTime += pratices.TypingTime;
+
+            for (let i = 0; i < pratices.Details.length; i++) {
+                const data = pratices.Details[i].Event;
+                if (data.includes(TypingEvent.DoubleClick)) output[device].DoubleClickCount++;
+                else if (data.includes(TypingEvent.Click)) output[device].ClickCount++;
+                else if (data.includes(TypingEvent.Gestures)) output[device].GesturesCount++;
+                else if (data.includes(TypingEvent.MouseMove)) output[device].CusorMoveCount++;
+                else if (data.includes(TypingEvent.WordSelected)) output[device].WordSelectCount++;
+            }
+        }
+    }
+    return output;
 };
 
 test("Typing", async ({ page, context }) => {
@@ -73,25 +117,41 @@ test("Typing", async ({ page, context }) => {
     const { Pratice, RawData, Results, Summary } = await prepare(page, context);
 
     for (const account in Pratice) {
-        logger(`Typing: Account: ${account}, Compare Pratice And RawData.`);
+        logger(`Typing: Account: ${account}.`);
         expect(RawData[account]).not.toEqual(undefined);
         for (const device in Pratice[account]) {
-            logger(`Typing: Device: ${device}, Compare Pratice And RawData.`);
+            logger(`Typing: Device: ${device}.`);
             expect(RawData[account][device]).not.toEqual(undefined);
             // // TODO: Validate WPM
             const pratices = Pratice[account][device];
             const data = RawData[account][device];
             comparePraticeAndRawData(pratices.Details, data);
 
-            logger(`Typing: Device: ${device}, Compare Pratice And Results.`);
+            logger(`Typing: Device: ${device}.`);
             expect(Results[account][device]).not.toEqual(undefined);
             expect(Results[account][device].length).toEqual(1);
             const results = Results[account][device][0];
             if (!("WPM" in results)) throw new Error("");
             expect(pratices.CorrectChars).toEqual(results.CorrectChars);
             expect(pratices.WrongChars).toEqual(results.WrongChars);
-
             // TODO: count form pratices
         }
+    }
+
+    const nrd = normalizePratice(Pratice);
+    expect(Object.keys(nrd)).toEqual(Object.keys(Summary));
+    for (const device in nrd) {
+        logger(`Typing: Device: ${device}.`);
+        expect(Summary[device]).not.toEqual(undefined);
+        const summary = Summary[device];
+        if (!("GesturesCount" in summary)) throw new Error("");
+        const data = nrd[device];
+        // expect(summary.ClickCount*Settings.ParticipantCount).toEqual(data.ClickCount)
+        expect(summary.DoubleClickCount * Settings.ParticipantCount).toEqual(data.DoubleClickCount);
+        expect(summary.GesturesCount * Settings.ParticipantCount).toEqual(data.GesturesCount);
+        expect(summary.WordSelectCount * Settings.ParticipantCount).toEqual(data.WordSelectCount);
+        // expect(summary.CursorMoveCount*Settings.ParticipantCount).toEqual(data.CusorMoveCount)
+        const accuracy = data.CorrectChars / (data.CorrectChars + data.WrongChars);
+        expect(Math.round(accuracy * 100)).toEqual(summary.Accuracy);
     }
 });

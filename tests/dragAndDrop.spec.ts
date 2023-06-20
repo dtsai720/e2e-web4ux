@@ -168,15 +168,17 @@ test("Drag And Drop", async ({ page, context }) => {
     const { Pratice, RawData, Results, Summary } = await prepare(page, context);
 
     expect(Object.keys(Pratice).length).toEqual(Object.keys(RawData).length);
+    expect(Object.keys(Pratice).length).toEqual(Object.keys(Results).length);
     for (const account in Pratice) {
-        logger(`DragAndDrop: Account: ${account}, Compare Pratice And RawData.`);
+        logger(`DragAndDrop: Account: ${account}.`);
         expect(RawData[account]).not.toEqual(undefined);
+        expect(Results[account]).not.toEqual(undefined);
         expect(Object.keys(Pratice[account]).length).toEqual(Object.keys(RawData[account]).length);
 
-        for (const key in Pratice[account]) {
-            logger(`DragAndDrop: Device: ${key}, Compare Pratice And RawData.`);
-            const pratice = Pratice[account][key];
-            const data = RawData[account][key];
+        for (const device in Pratice[account]) {
+            logger(`DragAndDrop: Device: ${device}.`);
+            const pratice = Pratice[account][device];
+            const data = RawData[account][device];
             expect(data).not.toEqual(undefined);
             expect(pratice.Account).toEqual(account);
             expect(pratice.Details.length).toEqual(2);
@@ -188,17 +190,8 @@ test("Drag And Drop", async ({ page, context }) => {
                 expect(data[i].Account).toEqual(account);
                 comparePraticeAndRawData(pratice.Details[i], data[i]);
             }
-        }
-    }
 
-    expect(Object.keys(RawData).length).toEqual(Object.keys(Results).length);
-    for (const account in RawData) {
-        logger(`DragAndDrop: Account: ${account}, Compare RawData And Result.`);
-        expect(Results[account]).not.toEqual(undefined);
-        for (const device in RawData[account]) {
-            logger(`DragAndDrop: Device: ${device}, Compare RawData And Results.`);
             expect(Results[account][device]).not.toEqual(undefined);
-            const data = RawData[account][device];
             const result = Results[account][device];
             expect(data.length).toEqual(result.length);
             for (let i = 0; i < data.length; i++) {
@@ -210,6 +203,7 @@ test("Drag And Drop", async ({ page, context }) => {
     const nrd = normalizeRawData(RawData);
     expect(Object.keys(nrd).length).toEqual(Object.keys(Summary).length);
     for (const key in nrd) {
+        logger(`DragAndDrop: key: ${key}.`);
         expect(Summary[key]).not.toEqual(undefined);
         const data = nrd[key];
         const summary = Summary[key];

@@ -141,15 +141,17 @@ test("Winfitts", async ({ page, context }) => {
     const { Pratice, RawData, Summary, Results } = await prepare(page, context);
 
     expect(Object.keys(Pratice).length).toEqual(Object.keys(RawData).length);
+    expect(Object.keys(Pratice).length).toEqual(Object.keys(Results).length);
     for (const account in Pratice) {
-        logger(`Winfitts: Account: ${account}, Compare Pratice And RawData.`);
+        logger(`Winfitts: Account: ${account}.`);
         expect(RawData[account]).not.toEqual(undefined);
+        expect(Results[account]).not.toEqual(undefined);
         expect(Object.keys(Pratice[account]).length).toEqual(Object.keys(RawData[account]).length);
 
-        for (const key in Pratice[account]) {
-            logger(`Winfitts: Device: ${key}, Compare Pratice And RawData.`);
-            const pratice = Pratice[account][key];
-            const data = RawData[account][key];
+        for (const device in Pratice[account]) {
+            logger(`Winfitts: Device: ${device}.`);
+            const pratice = Pratice[account][device];
+            const data = RawData[account][device];
             expect(data).not.toEqual(undefined);
             expect(pratice.Account).toEqual(account);
             expect(data.Account).toEqual(account);
@@ -157,19 +159,9 @@ test("Winfitts", async ({ page, context }) => {
             const { ErrorRate, EventTime } = comparePraticeAndRawData(pratice, data);
             expect(`${ErrorRate}/${TotalTrailCount}`).toEqual(data.ErrorRate);
             expect(EventTime).toEqual(data.EventTime);
-        }
-    }
 
-    expect(Object.keys(RawData).length).toEqual(Object.keys(Results).length);
-    for (const account in RawData) {
-        logger(`Winfitts: Account: ${account}, Compare RawData And Results.`);
-        expect(Results[account]).not.toEqual(undefined);
-
-        for (const device in RawData[account]) {
-            logger(`Winfitts: Device: ${device}, Compare RawData And Results.`);
             expect(Results[account][device]).not.toEqual(undefined);
             const result = Results[account][device];
-            const data = RawData[account][device];
             compareRawDataAndResult(data, result);
         }
     }
@@ -178,6 +170,7 @@ test("Winfitts", async ({ page, context }) => {
     const nrd = normalizeRawData(RawData);
     expect(Object.keys(nrd).length).toEqual(Object.keys(Summary).length);
     for (const key in nrd) {
+        logger(`Winfitts: key: ${key}.`);
         expect(Summary[key]).not.toEqual(undefined);
         const data = nrd[key];
         const summary = Summary[key];
