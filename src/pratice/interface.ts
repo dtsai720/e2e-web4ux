@@ -46,7 +46,6 @@ type startOne = WinfittsPraticeDetails | DragAndDropPraticeDetails | TypingPrati
 type response = Promise<Record<string, Record<string, startOne>>>;
 
 interface IPratice {
-    startOne(p: Page, deviceId: string, account: string): Promise<startOne>;
     start(p: Page, devices: Device[], users: Participant[]): response;
 }
 

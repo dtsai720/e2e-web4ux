@@ -2,7 +2,7 @@ import { Page } from "@playwright/test";
 
 import { URL, HTML } from "../http/constants";
 
-class Pratice {
+abstract class Pratice {
     protected async prepare(page: Page, deviceId: string, account: string) {
         const url = [URL.StartPraticePrefix, deviceId].join("/");
         await page.goto(url);

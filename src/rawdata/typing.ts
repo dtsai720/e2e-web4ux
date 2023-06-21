@@ -1,11 +1,14 @@
 import { Locator, Page } from "@playwright/test";
 import { RawData } from "./prototype";
-import { TypingDetail, TypingFetchOne, TypingResult } from "./interface";
+import { TypingDetail, TypingFetchOne, TypingResult, TypingTitle } from "./interface";
 import { Selector } from "./constants";
 import { URL } from "../http/constants";
 
 class TypingRawData extends RawData {
     protected urlPrefix = URL.TypingRawDataPrefix;
+    protected toCanonicalTitle(array: string[]): TypingTitle {
+        return { Event: "", Details: [] };
+    }
     protected toCanonicalHead(array: ReadonlyArray<string>) {
         return {
             Account: array[1],

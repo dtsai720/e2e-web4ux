@@ -12,10 +12,10 @@ const Selector = {
     Summary: ".page-content > div:nth-child(4)",
 } as const;
 
-class Result {
-    protected urlPrefix: string;
-    protected detailLength: number;
-    protected summaryLength: number;
+abstract class Result {
+    protected abstract urlPrefix: string;
+    protected abstract detailLength: number;
+    protected abstract summaryLength: number;
     protected async textContent(locator: Locator) {
         const candidates: string[][] = [];
         for (const items of await locator.locator(HTML.Tag.Tr).all()) {
@@ -83,17 +83,11 @@ class Result {
         return results;
     }
 
-    protected toCanonicalSummaryDetail(array: string[]): summary {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalSummaryDetail(array: string[]): summary;
 
-    protected toCanonicalSummaryKey(array: string[]): string {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalSummaryKey(array: string[]): string;
 
-    protected toCanonicalResults(array: string[], Account: string): detail {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalResults(array: string[], Account: string): detail;
 }
 
 export { Result };

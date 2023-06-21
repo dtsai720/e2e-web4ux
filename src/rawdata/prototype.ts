@@ -35,8 +35,8 @@ type detail = WinfittsDetail | DragAndDropDetail | TypingDetail;
 type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[] | TypingResult[];
 type fetchOne = WinfittsFetchOne | DragAndDropFetchOne | TypingFetchOne;
 
-class RawData {
-    protected urlPrefix: string;
+abstract class RawData {
+    protected abstract urlPrefix: string;
     protected async head(locator: Locator): Promise<head> {
         const array: string[] = [];
         for (const column of await locator.locator(Selector.Head).all()) {
@@ -81,33 +81,19 @@ class RawData {
         }
     }
 
-    protected toCanonicalTitle(array: string[]): title {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalTitle(array: string[]): title;
 
-    protected toCanonicalDetail(array: string[]): detail {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalDetail(array: string[]): detail;
 
-    protected toCanonicalHead(array: string[]): head {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalHead(array: string[]): head;
 
-    protected async detail(locator: Locator): Promise<detail[]> {
-        throw new Error("Not Implement");
-    }
+    protected abstract detail(locator: Locator): Promise<detail[]>;
 
-    protected async result(locator: Locator): Promise<results> {
-        throw new Error("Not Implement");
-    }
+    protected abstract result(locator: Locator): Promise<results>;
 
-    protected async fetchOne(row: Locator): Promise<fetchOne> {
-        throw new Error("Not Implement");
-    }
+    protected abstract fetchOne(row: Locator): Promise<fetchOne>;
 
-    public async fetchAll(page: Page, resultId: string): Promise<fetchAll> {
-        throw new Error("Not Implement");
-    }
+    public abstract fetchAll(page: Page, resultId: string): Promise<fetchAll>;
 }
 
 export { RawData };

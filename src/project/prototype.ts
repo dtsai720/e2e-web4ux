@@ -49,7 +49,7 @@ const Selector = {
     },
 } as const;
 
-class Project {
+abstract class Project {
     protected token: string;
     protected cookie: string;
 
