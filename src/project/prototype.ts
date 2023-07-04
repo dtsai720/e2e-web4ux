@@ -1,5 +1,5 @@
 import { Page } from "@playwright/test";
-import { Account, Settings } from "../config";
+import { Account } from "../config";
 import { CreateProjectParams } from "./constants";
 import { URL, Headers, Method, HTML } from "../http/constants";
 import { CreateProjectRequest, Device, Participant } from "./interface";

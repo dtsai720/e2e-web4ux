@@ -122,7 +122,6 @@ test("Typing", async ({ page, context }) => {
         for (const device in Pratice[account]) {
             logger(`Typing: Device: ${device}.`);
             expect(RawData[account][device]).not.toEqual(undefined);
-            // // TODO: Validate WPM
             const pratices = Pratice[account][device];
             const data = RawData[account][device];
             comparePraticeAndRawData(pratices.Details, data);
@@ -134,6 +133,10 @@ test("Typing", async ({ page, context }) => {
             if (!("WPM" in results)) throw new Error("");
             expect(pratices.CorrectChars).toEqual(results.CorrectChars);
             expect(pratices.WrongChars).toEqual(results.WrongChars);
+            // TotalChars / 5 per minute
+            const TotalChars = results.CorrectChars + results.WrongChars;
+            const WPM = (TotalChars * 12000) / results.TypingTime;
+            expect(Math.abs(results.WPM - WPM)).toBeLessThanOrEqual(0.01);
             // TODO: count form pratices
         }
     }

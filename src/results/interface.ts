@@ -39,7 +39,7 @@ interface TypingResultDetail extends TypingBase {
     TotalChars: number;
     CorrectChars: number;
     WrongChars: number;
-    EventTime: number;
+    TypingTime: number;
 }
 interface TypingSummary extends Summary, TypingBase {}
 interface DragAndDropResultSummary extends Summary, DragAndDropResultBase {}

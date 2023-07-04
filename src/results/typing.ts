@@ -16,7 +16,7 @@ class TypingResult extends Result {
             WrongChars: Number(wrong[0]),
             WPM: Number(array[2]),
             Accuracy: Number(array[3].replace("%", "").trim()),
-            EventTime: Number(array[4]),
+            TypingTime: Number(array[4]),
             ClickCount: Number(array[5]),
             DoubleClickCount: Number(array[6]),
             WordSelectCount: Number(array[7]),
