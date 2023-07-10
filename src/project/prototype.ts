@@ -106,17 +106,16 @@ abstract class Project {
         return output;
     }
 
-    public async participant(page: Page, projectId: string, participantCount: number) {
+    public async participant(page: Page, projectId: string) {
         await page.goto([URL.FetchParticipantPrefix, projectId].join("/"));
         await page.waitForSelector(HTML.Tag.Table);
         const output: Participant[] = [];
-        for (let i = 0; i < participantCount; i++) {
-            const elements = {
-                Id: page.locator(Selector.Participant.Id(i)),
-                Account: page.locator(Selector.Participant.Account(i)),
-            } as const;
-            const Id = (await elements.Id.getAttribute(HTML.Attribute.Value)) || "";
-            const Account = (await elements.Account.getAttribute(HTML.Attribute.Value)) || "";
+        for (const element of await page.locator(".participants").all()) {
+            const Id =
+                (await element.locator(".ParticipantId").getAttribute(HTML.Attribute.Value)) || "";
+            const Account =
+                (await element.locator(".ParticipantAccount").getAttribute(HTML.Attribute.Value)) ||
+                "";
             output.push({ Id, Account });
         }
         return output;

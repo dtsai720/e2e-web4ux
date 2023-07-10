@@ -26,11 +26,7 @@ const prepare = async (page: Page, context: BrowserContext) => {
     } as const;
     const project = new DragAndDropProject(token, cookie);
     const details = await project.setup(page, request);
-    const participants = await project.participant(
-        page,
-        details.Detail.ProjectId,
-        request.ParticipantCount
-    );
+    const participants = await project.participant(page, details.Detail.ProjectId);
     const devices = await project.device(page, details.Detail.ProjectId);
     const ddp = new DragAndDropPratices();
     const Pratice = await ddp.start(page, devices, participants);
@@ -53,8 +49,9 @@ const comparePraticeAndRawData = (
         logger(`DragAndDrop: Compare file${i}`);
         const pratice = pratices[i];
         const data = rawdata.Results[i];
+        expect(pratice.Events.length).toBeGreaterThanOrEqual(1);
         expect(pratice.Events.length === 1).toEqual(pratice.IsPassed);
-        // expect(pratice.IsPassed).toEqual(data.Title.IsPassed);
+        expect(pratice.IsPassed).toEqual(!data.Title.IsFailed);
         expect(pratice.FileIndex).toEqual(data.Title.FileIndex);
         expect(pratice.Events.length).toBeLessThanOrEqual(data.Detail.length);
         // NumberOfMove += pratice.NumberOfMove
@@ -67,6 +64,8 @@ const comparePraticeAndRawData = (
             expect(source.DragSide).toEqual(datum.DragSide);
             timestamp += datum.EventTime;
         }
+        const last = pratice.Events[pratice.Events.length - 1];
+        expect(last.DragSide.toLowerCase()).toEqual("target");
         expect(data.Title.EventTime).toEqual(timestamp);
         EventTime += data.Title.EventTime;
     }

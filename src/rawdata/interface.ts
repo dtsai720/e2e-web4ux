@@ -33,7 +33,7 @@ interface WinfittsTitle extends EventTime {
 }
 interface DragAndDropTitle extends EventTime {
     FileIndex: string;
-    IsPassed: boolean;
+    IsFailed: boolean;
 }
 interface TypingTitle {
     Event: string;

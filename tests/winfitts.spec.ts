@@ -25,11 +25,7 @@ const prepare = async (page: Page, context: BrowserContext) => {
     } as const;
     const project = new WinfittsProject(token, cookie);
     const details = await project.setup(page, request);
-    const participants = await project.participant(
-        page,
-        details.Detail.ProjectId,
-        request.ParticipantCount
-    );
+    const participants = await project.participant(page, details.Detail.ProjectId);
     const devices = await project.device(page, details.Detail.ProjectId);
     const wp = new WinfittsPratices();
     const Pratice = await wp.start(page, devices, participants);

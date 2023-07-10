@@ -24,11 +24,7 @@ const prepare = async (page: Page, context: BrowserContext) => {
     } as const;
     const project = new TypingProject(token, cookie);
     const details = await project.setup(page, request);
-    const participants = await project.participant(
-        page,
-        details.Detail.ProjectId,
-        request.ParticipantCount
-    );
+    const participants = await project.participant(page, details.Detail.ProjectId);
     const devices = await project.device(page, details.Detail.ProjectId);
     const tp = new TypingPratice();
     const Pratice = await tp.start(page, devices, participants);
@@ -137,7 +133,18 @@ test("Typing", async ({ page, context }) => {
             const TotalChars = results.CorrectChars + results.WrongChars;
             const WPM = (TotalChars * 12000) / results.TypingTime;
             expect(Math.abs(results.WPM - WPM)).toBeLessThanOrEqual(0.01);
-            // TODO: count form pratices
+
+            const records = { DoubleClickCount: 0, WordSelectCount: 0, GesturesCount: 0 };
+            for (let i = 0; i < pratices.Details.length; i++) {
+                const event = pratices.Details[i].Event;
+                if (event.startsWith("Double")) records.DoubleClickCount++;
+                if (event.startsWith("Select")) records.WordSelectCount++;
+                if (event.includes("wheel", 0)) records.GesturesCount++;
+            }
+
+            expect(records.DoubleClickCount).toEqual(results.DoubleClickCount);
+            expect(records.WordSelectCount).toEqual(results.WordSelectCount);
+            expect(records.GesturesCount).toEqual(results.GesturesCount);
         }
     }
 

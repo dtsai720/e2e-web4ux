@@ -28,7 +28,7 @@ interface IProject {
     setup(p: Page, r: CreateProjectRequest): Promise<{ Devices: Device[]; Detail: FetchOne }>;
     create(r: CreateProjectRequest): Promise<void>;
     device(p: Page, id: string): Promise<Device[]>;
-    participant(p: Page, id: string, count: number): Promise<Participant[]>;
+    participant(p: Page, id: string): Promise<Participant[]>;
 }
 
 export { IProject, CreateProjectRequest, Participant, FetchOne, Resolution, Device };

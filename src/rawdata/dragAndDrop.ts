@@ -35,7 +35,7 @@ class DragAndDropRawData extends RawData implements IRawData {
     protected toCanonicalTitle(array: ReadonlyArray<string>) {
         return {
             FileIndex: array[0],
-            IsPassed: array[1] === "True",
+            IsFailed: array[1] === "Yes",
             EventTime: Number(array[3]),
         } as const;
     }
