@@ -6,6 +6,7 @@ import { IRawData, WinfittsDetail, WinfittsFetchOne, WinfittsRawDataResult } fro
 import { Selector } from "./constants";
 
 class WinfittsRawData extends RawData implements IRawData {
+    protected urlPrefix = URL.WinfittsRawDataPrefix;
     protected toCanonicalHead(array: ReadonlyArray<string>) {
         return {
             Account: array[1],
@@ -63,7 +64,7 @@ class WinfittsRawData extends RawData implements IRawData {
 
     protected async fetchOne(row: Locator) {
         const participant = await this.head(row);
-        if (!("ErrorRate" in participant)) throw new Error("");
+        if (!("ErrorRate" in participant)) throw new Error("TypeError: Required WinfittsHead");
         return {
             Account: participant.Account,
             DeviceName: participant.DeviceName,
@@ -75,15 +76,14 @@ class WinfittsRawData extends RawData implements IRawData {
     }
 
     async fetchAll(page: Page, resultId: string) {
-        const url = [URL.WinfittsRawDataPrefix, resultId].join("/");
-        await page.goto(url);
-        await page.waitForSelector(Selector.Table);
-        const table = page.locator(Selector.Table);
-        const output: Record<string, WinfittsFetchOne> = {};
-        for (const row of await table.locator(Selector.Row).all()) {
-            const detail = await this.fetchOne(row);
+        const output: Record<string, Record<string, WinfittsFetchOne>> = {};
+        const candidates = this.prepareFetchAll(page, resultId);
+        for (let cur = await candidates.next(); !cur.done; cur = await candidates.next()) {
+            const detail = await this.fetchOne(cur.value);
             const account = detail.Account;
-            output[account] = detail;
+            if (output[account] === undefined) output[account] = {};
+            const key = `${detail.ModelName}-${detail.DeviceName}`;
+            output[account][key] = detail;
         }
         return output;
     }

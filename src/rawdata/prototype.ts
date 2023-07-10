@@ -6,12 +6,19 @@ import {
     DragAndDropHead,
     DragAndDropRawDataResult,
     DragAndDropTitle,
+    TypingDetail,
+    TypingFetchOne,
+    TypingHead,
+    TypingResult,
+    TypingTitle,
     WinfittsDetail,
     WinfittsFetchOne,
     WinfittsHead,
     WinfittsRawDataResult,
     WinfittsTitle,
+    fetchAll,
 } from "./interface";
+import { Settings } from "../config";
 
 const Selector = {
     Table: "#divData",
@@ -22,15 +29,14 @@ const Selector = {
     ClickResults: "div.data3",
 } as const;
 
-type head = WinfittsHead | DragAndDropHead;
-type title = WinfittsTitle | DragAndDropTitle;
-type detail = WinfittsDetail | DragAndDropDetail;
-type details = WinfittsDetail[] | DragAndDropDetail[];
-type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[];
-type fetchOne = WinfittsFetchOne | DragAndDropFetchOne;
-type fetchAll = Record<string, WinfittsFetchOne | DragAndDropFetchOne[]>;
+type head = WinfittsHead | DragAndDropHead | TypingHead;
+type title = WinfittsTitle | DragAndDropTitle | TypingTitle;
+type detail = WinfittsDetail | DragAndDropDetail | TypingDetail;
+type results = WinfittsRawDataResult[] | DragAndDropRawDataResult[] | TypingResult[];
+type fetchOne = WinfittsFetchOne | DragAndDropFetchOne | TypingFetchOne;
 
-class RawData {
+abstract class RawData {
+    protected abstract urlPrefix: string;
     protected async head(locator: Locator): Promise<head> {
         const array: string[] = [];
         for (const column of await locator.locator(Selector.Head).all()) {
@@ -64,33 +70,30 @@ class RawData {
         return array;
     }
 
-    protected toCanonicalTitle(array: string[]): title {
-        throw new Error("Not Implement");
+    protected async *prepareFetchAll(page: Page, resultId: string) {
+        await new Promise(f => setTimeout(f, Settings.WaittingResultInSecond));
+        const url = [this.urlPrefix, resultId].join("/");
+        await page.goto(url);
+        await page.waitForSelector(Selector.Table);
+        const table = page.locator(Selector.Table);
+        for (const row of await table.locator(Selector.Row).all()) {
+            yield row;
+        }
     }
 
-    protected toCanonicalDetail(array: string[]): detail {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalTitle(array: string[]): title;
 
-    protected toCanonicalHead(array: string[]): head {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalDetail(array: string[]): detail;
 
-    protected async detail(locator: Locator): Promise<details> {
-        throw new Error("Not Implement");
-    }
+    protected abstract toCanonicalHead(array: string[]): head;
 
-    protected async result(locator: Locator): Promise<results> {
-        throw new Error("Not Implement");
-    }
+    protected abstract detail(locator: Locator): Promise<detail[]>;
 
-    protected async fetchOne(row: Locator): Promise<fetchOne> {
-        throw new Error("Not Implement");
-    }
+    protected abstract result(locator: Locator): Promise<results>;
 
-    public async fetchAll(page: Page, resultId: string): Promise<fetchAll> {
-        throw new Error("Not Implement");
-    }
+    protected abstract fetchOne(row: Locator): Promise<fetchOne>;
+
+    public abstract fetchAll(page: Page, resultId: string): Promise<fetchAll>;
 }
 
 export { RawData };

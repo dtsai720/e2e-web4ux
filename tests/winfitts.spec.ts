@@ -12,7 +12,7 @@ import { WinfittsResult } from "../src/results/winfitts";
 import { WinfittsPraticeDetails } from "../src/pratice/interface";
 import { WinfittsFetchOne } from "../src/rawdata/interface";
 import { logger } from "../src/logger";
-import { WinfittsResultDetail } from "../src/results/interface";
+import { detail } from "../src/results/interface";
 
 const prepare = async (page: Page, context: BrowserContext) => {
     const token = await Token(page);
@@ -20,25 +20,21 @@ const prepare = async (page: Page, context: BrowserContext) => {
     const projectName = NewProjectName("Winfitts", "");
     const request = {
         ProjectName: projectName,
-        ModelName: Settings.ModelName,
-        DeviceName: Settings.DeviceName,
         ParticipantCount: Settings.ParticipantCount,
+        DeviceCount: Settings.DeviceCount,
     } as const;
     const project = new WinfittsProject(token, cookie);
     const details = await project.setup(page, request);
-    const participants = await project.participant(
-        page,
-        details.Detail.ProjectId,
-        request.ParticipantCount
-    );
-    const device = await project.device(page, details.Detail.ProjectId);
+    const participants = await project.participant(page, details.Detail.ProjectId);
+    const devices = await project.device(page, details.Detail.ProjectId);
     const wp = new WinfittsPratices();
-    const Pratice = await wp.start(page, device.Id, participants);
+    const Pratice = await wp.start(page, devices, participants);
     const wrd = new WinfittsRawData();
     const RawData = await wrd.fetchAll(page, details.Detail.ResultId);
     const wr = new WinfittsResult();
-    const Results = await wr.fetchAll(page, details.Detail.ResultId);
-    return { Pratice, RawData, Results };
+    const Summary = await wr.summary(page, details.Detail.ResultId);
+    const Results = await wr.results(page, details.Detail.ResultId);
+    return { Pratice, RawData, Summary, Results };
 };
 
 const comparePraticeAndRawData = (pratice: WinfittsPraticeDetails, rawdata: WinfittsFetchOne) => {
@@ -72,13 +68,8 @@ const comparePraticeAndRawData = (pratice: WinfittsPraticeDetails, rawdata: Winf
     return { ErrorRate, EventTime };
 };
 
-interface mapping {
-    TotalEventTime: number;
-    ValidErrorCount: number;
-}
-
 const convertToResult = (rawdata: WinfittsFetchOne) => {
-    const output: Record<string, mapping> = {};
+    const output: Record<string, { TotalEventTime: number; ValidErrorCount: number }> = {};
     for (let i = 0; i < rawdata.Results.length; i++) {
         const title = rawdata.Results[i].Title;
         const key = `${title.Width}-${title.Distance}`;
@@ -89,18 +80,52 @@ const convertToResult = (rawdata: WinfittsFetchOne) => {
     return output;
 };
 
-const compareRawDataAndResult = (rawdata: WinfittsFetchOne, results: WinfittsResultDetail) => {
+const compareRawDataAndResult = (rawdata: WinfittsFetchOne, results: detail[]) => {
     const data = convertToResult(rawdata);
-    expect(results.Details.length).toEqual(Object.keys(data).length);
-    const factor = TotalTrailCount / results.Details.length;
-    for (let i = 0; i < results.Details.length; i++) {
-        const result = results.Details[i];
+    expect(results.length).toEqual(Object.keys(data).length);
+    const factor = TotalTrailCount / results.length;
+    for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        if (!("Width" in result)) throw new Error("");
         logger(`Winfitts: Width: ${result.Width} And Distance: ${result.Distance}`);
         const key = `${result.Width}-${result.Distance}`;
         expect(data[key]).not.toEqual(undefined);
         expect(result.CursorMovementTime * factor).toEqual(data[key].TotalEventTime);
-        expect(result.ErrorRate * factor).toEqual(data[key].ValidErrorCount);
+        expect(result.ErrorRate * factor).toEqual(data[key].ValidErrorCount * 100);
     }
+};
+
+interface SimpleSummary {
+    CursorMovementTime: number;
+    ValidErrorCount: number;
+}
+
+function* generateRawData(rawdata: Record<string, Record<string, WinfittsFetchOne>>) {
+    for (const account in rawdata) {
+        for (const device in rawdata[account]) {
+            const fetchOne = rawdata[account][device];
+            const prefix = `${fetchOne.ModelName}-${fetchOne.DeviceName}`;
+            for (let i = 0; i < fetchOne.Results.length; i++) {
+                const title = fetchOne.Results[i].Title;
+                const postfix = `${title.Width}-${title.Distance}`;
+                const key = [prefix, postfix].join("-");
+                yield { title, key };
+            }
+        }
+    }
+}
+
+const normalizeRawData = (rawdata: Record<string, Record<string, WinfittsFetchOne>>) => {
+    const output: Record<string, SimpleSummary> = {};
+    const candidates = generateRawData(rawdata);
+    for (let current = candidates.next(); !current.done; current = candidates.next()) {
+        const title = current.value.title;
+        const key = current.value.key;
+        if (output[key] === undefined) output[key] = { CursorMovementTime: 0, ValidErrorCount: 0 };
+        output[key].CursorMovementTime += title.EventTime;
+        output[key].ValidErrorCount += title.IsFailed ? 1 : 0;
+    }
+    return output;
 };
 
 test("Winfitts", async ({ page, context }) => {
@@ -109,28 +134,45 @@ test("Winfitts", async ({ page, context }) => {
         height: Settings.Height,
     });
     await Login(page);
-    const { Pratice, RawData, Results } = await prepare(page, context);
+    const { Pratice, RawData, Summary, Results } = await prepare(page, context);
 
     expect(Object.keys(Pratice).length).toEqual(Object.keys(RawData).length);
-    for (const key in Pratice) {
-        logger(`Winfitts: Account: ${key}, Compare Pratice And RawData.`);
-        expect(RawData[key]).not.toEqual(undefined);
-        expect(RawData[key].Account).toEqual(key);
-        expect(RawData[key].ModelName).toEqual(Settings.ModelName);
-        expect(RawData[key].DeviceName).toEqual(Settings.DeviceName);
-        expect(Pratice[key].Account).toEqual(key);
-        expect(Pratice[key].Details.length).toEqual(RawData[key].Results.length);
-        const { ErrorRate, EventTime } = comparePraticeAndRawData(Pratice[key], RawData[key]);
-        expect(`${ErrorRate}/${TotalTrailCount}`).toEqual(RawData[key].ErrorRate);
-        expect(EventTime).toEqual(RawData[key].EventTime);
+    expect(Object.keys(Pratice).length).toEqual(Object.keys(Results).length);
+    for (const account in Pratice) {
+        logger(`Winfitts: Account: ${account}.`);
+        expect(RawData[account]).not.toEqual(undefined);
+        expect(Results[account]).not.toEqual(undefined);
+        expect(Object.keys(Pratice[account]).length).toEqual(Object.keys(RawData[account]).length);
+
+        for (const device in Pratice[account]) {
+            logger(`Winfitts: Device: ${device}.`);
+            const pratice = Pratice[account][device];
+            const data = RawData[account][device];
+            expect(data).not.toEqual(undefined);
+            expect(pratice.Account).toEqual(account);
+            expect(data.Account).toEqual(account);
+            expect(pratice.Details.length).toEqual(data.Results.length);
+            const { ErrorRate, EventTime } = comparePraticeAndRawData(pratice, data);
+            expect(`${ErrorRate}/${TotalTrailCount}`).toEqual(data.ErrorRate);
+            expect(EventTime).toEqual(data.EventTime);
+
+            expect(Results[account][device]).not.toEqual(undefined);
+            const result = Results[account][device];
+            compareRawDataAndResult(data, result);
+        }
     }
 
-    expect(Object.keys(RawData).length).toEqual(Object.keys(Results).length);
-    for (const key in RawData) {
-        logger(`Winfitts: Account: ${key}, Compare RawData And Result.`);
-        expect(Results[key]).not.toEqual(undefined);
-        expect(Results[key].Account).toEqual(key);
-        expect(RawData[key].Account).toEqual(key);
-        compareRawDataAndResult(RawData[key], Results[key]);
+    // Compare RawData And Summary
+    const nrd = normalizeRawData(RawData);
+    expect(Object.keys(nrd).length).toEqual(Object.keys(Summary).length);
+    for (const key in nrd) {
+        logger(`Winfitts: key: ${key}.`);
+        expect(Summary[key]).not.toEqual(undefined);
+        const data = nrd[key];
+        const summary = Summary[key];
+        const factor = (TotalTrailCount * Settings.ParticipantCount) / 4;
+        if (!("CursorMovementTime" in summary)) throw new Error("");
+        expect(data.CursorMovementTime).toEqual(Math.round(summary.CursorMovementTime * factor));
+        expect(data.ValidErrorCount * 100).toEqual(Math.round(summary.ErrorRate * factor));
     }
 });

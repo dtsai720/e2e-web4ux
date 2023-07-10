@@ -1,13 +1,20 @@
 import { Page } from "@playwright/test";
 
-interface WinfittsResultRow {
-    Id: number;
+interface Summary {
+    ModelName: string;
+    DeviceName: string;
+}
+interface WinfittsResultBase {
     Width: number;
     Distance: number;
     CursorMovementTime: number;
     ErrorRate: number;
 }
-interface DragAndDropResultRow {
+interface WinfittsResultSummary extends Summary, WinfittsResultBase {}
+interface WinfittsResultDetail extends WinfittsResultBase {
+    Account: string;
+}
+interface DragAndDropResultBase {
     ArrowTo: string;
     InFolder: number;
     InDesktop: number;
@@ -15,23 +22,42 @@ interface DragAndDropResultRow {
     DoubleClick: number;
     ErrorRate: number;
 }
-interface WinfittsResultDetail {
+interface DragAndDropResultDetail extends DragAndDropResultBase {
     Account: string;
-    Details: WinfittsResultRow[];
 }
-interface DragAndDropResultDetail {
+interface TypingBase {
+    WPM: number;
+    Accuracy: number;
+    ClickCount: number;
+    DoubleClickCount: number;
+    WordSelectCount: number;
+    CursorMoveCount: number;
+    GesturesCount: number;
+}
+interface TypingResultDetail extends TypingBase {
     Account: string;
-    Details: DragAndDropResultRow[];
+    TotalChars: number;
+    CorrectChars: number;
+    WrongChars: number;
+    TypingTime: number;
 }
-type detail = WinfittsResultDetail | DragAndDropResultDetail;
+interface TypingSummary extends Summary, TypingBase {}
+interface DragAndDropResultSummary extends Summary, DragAndDropResultBase {}
+type detail = WinfittsResultDetail | DragAndDropResultDetail | TypingResultDetail;
+type summary = WinfittsResultSummary | DragAndDropResultSummary | TypingSummary;
 interface IResult {
-    fetchAll(page: Page, resultId: string): Promise<Record<string, detail>>;
+    results(page: Page, resultId: string): Promise<Record<string, Record<string, detail[]>>>;
+    summary(page: Page, resultId: string): Promise<Record<string, summary>>;
 }
 
 export {
-    WinfittsResultRow,
-    DragAndDropResultRow,
+    summary,
+    detail,
+    WinfittsResultSummary,
+    DragAndDropResultSummary,
+    TypingSummary,
     WinfittsResultDetail,
     DragAndDropResultDetail,
+    TypingResultDetail,
     IResult,
 };

@@ -74,22 +74,16 @@ Edit file named '.env'.
     Calibrate=4.125
     ```
 
-4. **Change model name and device name for what you want.**
+4. **Change device count.**
 
     ```sh
-    ModelName='model name'
-    DeviceName='device name'
+    DeviceCount=2
     ```
 
 5. **Change participant count.**
 
     ```sh
     ParticipantCount=12
-    ```
-
-6. **Change total error rate.**
-    ```sh
-    WinfittsFailedRate=15
     ```
 
 ## **Run The Test**

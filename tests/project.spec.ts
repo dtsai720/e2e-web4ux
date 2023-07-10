@@ -11,8 +11,8 @@ const prefix = "ALL";
 
 const Input = {
     ParticipantCount: Settings.ParticipantCount.toString(),
-    ModelName: Settings.ModelName,
-    DeviceName: Settings.DeviceName,
+    ModelName: "ModelName",
+    DeviceName: "DeviceName",
     TotalTimer: "1",
     CountdownTimer: "60",
     TextName: "What Is Yoga?",
@@ -87,7 +87,7 @@ test.describe("Validate Project", () => {
         await page.locator(Selector.NextButton).click();
 
         await page.waitForSelector(Selector.WaitFor.Page2);
-        const step2 = await page.locator(Selector.Page2.TaskContent);
+        const step2 = page.locator(Selector.Page2.TaskContent);
         await step2.locator(Selector.Page2.Task.Winfitts).click();
         await step2.locator(Selector.Page2.Task.DragAnddrop).click();
         await step2.locator(Selector.Page2.Task.Typing).click();
@@ -96,7 +96,7 @@ test.describe("Validate Project", () => {
         await page.locator(Selector.Page2.ExpandSetting.Typing).click();
         await page.waitForSelector(Selector.Page2.Typing.WaitFor);
 
-        const typing = await page.locator(Selector.Page2.Typing.Body);
+        const typing = page.locator(Selector.Page2.Typing.Body);
         await typing.locator(Selector.Page2.Typing.TotalTimer).fill(Input.TotalTimer);
         await typing.locator(Selector.Page2.Typing.CountdownTimer).fill(Input.CountdownTimer);
         await typing.locator(Selector.Page2.Typing.Document.Start).click();
@@ -112,7 +112,7 @@ test.describe("Validate Project", () => {
 
         await page.waitForSelector(Selector.WaitFor.Page4);
 
-        const tasks = await page.locator(Selector.Page4.Tasks);
+        const tasks = page.locator(Selector.Page4.Tasks);
         const Output = {
             ProjectName: await page.locator(Selector.Page4.ProjectName).textContent(),
             ParticipantCount: await page.locator(Selector.Page4.Participant).textContent(),
@@ -121,7 +121,7 @@ test.describe("Validate Project", () => {
             TotalTimer: await tasks.locator(Selector.Page4.Typing.TotalTimer).textContent(),
             CountdownTimer: await tasks.locator(Selector.Page4.Typing.CountdownTimer).textContent(),
             TextName: await tasks.locator(Selector.Page4.Typing.SelecteDocument).textContent(),
-        };
+        } as const;
 
         expect(Output.ProjectName).toEqual(ProjectName);
         expect(Output.ParticipantCount).toEqual(Input.ParticipantCount);
@@ -130,7 +130,5 @@ test.describe("Validate Project", () => {
         expect(Output.TotalTimer).toEqual(Input.TotalTimer);
         expect(Output.CountdownTimer).toEqual(Input.CountdownTimer);
         expect(Output.TextName).toContain(Input.TextName);
-
-        // await page.getByRole(HTML.Role.Button, { name: "Create to draft" }).click();
     });
 });

@@ -12,7 +12,12 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
     testDir: "./tests",
     /* Maximum time one test can run for. */
-    timeout: parseInt(process.env.ParticipantCount || "12") * 60 * 1000 * 2,
+    timeout:
+        parseInt(process.env.ParticipantCount || "12") *
+        parseInt(process.env.DeviceCount || "1") *
+        1000 *
+        60 *
+        3,
     expect: {
         /**
          * Maximum time expect() should wait for the condition to be met.

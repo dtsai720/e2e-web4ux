@@ -11,6 +11,7 @@ import {
 } from "./interface";
 
 class DragAndDropRawData extends RawData implements IRawData {
+    protected urlPrefix = URL.DragAndDropRawDataPrefix;
     protected toCanonicalHead(array: ReadonlyArray<string>) {
         return {
             Account: array[1],
@@ -34,7 +35,7 @@ class DragAndDropRawData extends RawData implements IRawData {
     protected toCanonicalTitle(array: ReadonlyArray<string>) {
         return {
             FileIndex: array[0],
-            IsPassed: array[1] === "True",
+            IsFailed: array[1] === "Yes",
             EventTime: Number(array[3]),
         } as const;
     }
@@ -62,29 +63,28 @@ class DragAndDropRawData extends RawData implements IRawData {
 
     protected async fetchOne(row: Locator): Promise<DragAndDropFetchOne> {
         const participant = await this.head(row);
-        if (!("DragSide" in participant)) throw new Error("");
+        if (!("DragSide" in participant)) throw new Error("TypeError: required DragAndDropHead");
         return {
             Account: participant.Account,
             ModelName: participant.ModelName,
             DeviceName: participant.DeviceName,
-            DragSide: participant.DragSide,
+            ArrowTo: participant.DragSide,
             NumberOfMove: participant.NumberOfMove,
             EventTime: participant.EventTime,
-            Result: await this.result(row),
+            Results: await this.result(row),
         } as const;
     }
 
     async fetchAll(page: Page, resultId: string) {
-        const url = [URL.DragAndDropRawDataPrefix, resultId].join("/");
-        await page.goto(url);
-        await page.waitForSelector(Selector.Table);
-        const table = page.locator(Selector.Table);
-        const output: Record<string, DragAndDropFetchOne[]> = {};
-        for (const row of await table.locator(Selector.Row).all()) {
-            const detail = await this.fetchOne(row);
+        const output: Record<string, Record<string, DragAndDropFetchOne[]>> = {};
+        const candidates = this.prepareFetchAll(page, resultId);
+        for (let cur = await candidates.next(); !cur.done; cur = await candidates.next()) {
+            const detail = await this.fetchOne(cur.value);
             const account = detail.Account;
-            if (output[account] === undefined) output[account] = [];
-            output[account].push(detail);
+            const key = `${detail.ModelName}-${detail.DeviceName}`;
+            if (output[account] === undefined) output[account] = {};
+            if (output[account][key] === undefined) output[account][key] = [];
+            output[account][key].push(detail);
         }
         return output;
     }

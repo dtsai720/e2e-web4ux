@@ -7,9 +7,8 @@ interface Device {
 }
 interface CreateProjectRequest {
     ProjectName: string;
-    ModelName: string;
-    DeviceName: string;
     ParticipantCount: number;
+    DeviceCount: number;
 }
 interface Participant {
     Id: string;
@@ -26,11 +25,10 @@ interface Resolution {
 }
 
 interface IProject {
-    setup(p: Page, r: CreateProjectRequest): Promise<{ Device: Device; Detail: FetchOne }>;
+    setup(p: Page, r: CreateProjectRequest): Promise<{ Devices: Device[]; Detail: FetchOne }>;
     create(r: CreateProjectRequest): Promise<void>;
-    device(p: Page, id: string): Promise<Device>;
-    participant(p: Page, id: string, count: number): Promise<Participant[]>;
-    fetchOne(name: string, creator: string): Promise<FetchOne>;
+    device(p: Page, id: string): Promise<Device[]>;
+    participant(p: Page, id: string): Promise<Participant[]>;
 }
 
 export { IProject, CreateProjectRequest, Participant, FetchOne, Resolution, Device };

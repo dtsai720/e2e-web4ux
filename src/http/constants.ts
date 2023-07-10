@@ -21,6 +21,7 @@ const HTML = {
             Start: "Start",
             Finish: "Finish",
             Create: "Create to draft",
+            StartTyping: "Start Typing",
         },
     },
 } as const;
@@ -29,15 +30,18 @@ const URL = {
     Login: `${Settings.Host}/Home/Login`,
     Home: `${Settings.Host}/Project`,
     CreateProject: `${Settings.Host}/Project/Add`,
+    DeleteProject: `${Settings.Host}/Project/Delete`,
     ListProject: `${Settings.Host}/Project/_Projects`,
     FetchDevicePrefix: `${Settings.Host}/Project/Devices`,
     CalibrateDevicePrefix: `${Settings.Host}/Project/DeviceSetting`,
     FetchParticipantPrefix: `${Settings.Host}/Project/Participants`,
     StartPraticePrefix: `${Settings.ExperimentHost}/Login`,
     WinfittsResultPrefix: `${Settings.Host}/Project/WinfittsResult`,
-    WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRowData`,
-    DragAndDropRawDataPrefix: `${Settings.Host}/Project/DragRowData`,
+    WinfittsRawDataPrefix: `${Settings.Host}/Project/WinfittsRawData`,
+    DragAndDropRawDataPrefix: `${Settings.Host}/Project/DragRawData`,
     DragAndDropResultPrefix: `${Settings.Host}/Project/DragDropResult`,
+    TypingResultPrefix: `${Settings.Host}/Project/TypingResult`,
+    TypingRawDataPrefix: `${Settings.Host}/Project/TypingRawData`,
 } as const;
 
 export { Headers, Method, URL, Token, HTML };
