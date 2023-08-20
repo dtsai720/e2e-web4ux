@@ -5,7 +5,7 @@ import { Settings } from "../config";
 
 const Default = {
     FontSize: 14,
-    TextId: "29ce0661d80b4b8cb2b765fab1aecb0f",
+    TextId: "8df33796abcc4eaa89fcc4a2c21933b3",
 } as const;
 
 const TypingParams = {

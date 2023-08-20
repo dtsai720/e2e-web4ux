@@ -45,24 +45,65 @@ const TypingEvent = {
     },
 } as const;
 
+class TrieNode {
+    key: string | null;
+    children: Record<string, TrieNode>;
+    isWord: boolean;
+    constructor(key: string | null) {
+        this.key = key;
+        this.children = {};
+        this.isWord = false;
+    }
+}
+
+class Trie {
+    private root: TrieNode;
+    constructor() {
+        this.root = new TrieNode(null);
+    }
+
+    public insert(word: string) {
+        let cur = this.root;
+        for (let i = 0; i < word.length; i++) {
+            const char = word[i];
+            if (cur.children[char] === undefined) cur.children[char] = new TrieNode(char);
+            cur = cur.children[char];
+        }
+        cur.isWord = true;
+    }
+
+    public isSubString(word: string): boolean {
+        let cur = this.root;
+        for (let i = 0; i < word.length; i++) {
+            const char = word[i];
+            cur = cur.children[char];
+        }
+        return Object.keys(cur.children).length !== 0;
+    }
+}
+
 class TypingPratice extends Pratice {
     private isSpace(word: string) {
         return Pattern.Space.test(word);
     }
 
     private selectedWord(words: string) {
+        const trie = new Trie();
         const matches = words.match(Pattern.English);
         const dictionary: Record<string, number> = {};
         if (matches === null) throw new Error("");
         for (let i = 0; i < matches.length; i++) {
             const key = matches[i];
-            if (key.length === 1) continue;
-            if (dictionary[key] === undefined) dictionary[key] = 0;
+            if (dictionary[key] === undefined) {
+                dictionary[key] = 0;
+                trie.insert(key);
+            }
             dictionary[key]++;
         }
 
         const candidates: { Word: string; Count: number }[] = [];
         for (const word in dictionary) {
+            if (trie.isSubString(word)) continue;
             candidates.push({ Word: word, Count: dictionary[word] });
         }
 

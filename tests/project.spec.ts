@@ -15,7 +15,7 @@ const Input = {
     DeviceName: "DeviceName",
     TotalTimer: "1",
     CountdownTimer: "60",
-    TextName: "What Is Yoga?",
+    TextName: "Paper (1192) by Athena",
 } as const;
 
 const Selector = {
